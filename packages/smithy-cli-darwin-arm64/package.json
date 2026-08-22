@@ -1,0 +1,13 @@
+{
+  "name": "@smithy-react/smithy-cli-darwin-arm64",
+  "version": "0.0.1-spike",
+  "description": "Smithy CLI for macOS ARM64, used by Smithy React",
+  "type": "module",
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "exports": "./index.js",
+  "files": ["index.js", "vendor"],
+  "scripts": { "prepack": "node ../../scripts/check-smithy-cli-package.mjs" },
+  "publishConfig": { "access": "public" },
+  "license": "Apache-2.0"
+}

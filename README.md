@@ -10,10 +10,12 @@ is intentionally not ready for publication.
 ## Run the spike
 
 Requirements: Node.js 20.19 or newer. The example does not require a system JDK
-or Gradle.
+or Gradle. While working from this source checkout before the platform packages
+are published, prepare the package for the current machine once:
 
 ```sh
 npm install
+npm run prepare:cli
 npm run dev
 ```
 
@@ -35,9 +37,9 @@ npm run smoke
 
 ## Spike architecture
 
-- `@smithy-react/codegen` downloads a pinned Smithy CLI distribution, verifies
-  its SHA-256 digest, writes an ephemeral `smithy-build.json`, and invokes the
-  CLI from Node.
+- `@smithy-react/codegen` selects a platform-specific optional npm package,
+  writes an ephemeral `smithy-build.json`, and invokes its bundled Smithy CLI
+  from Node.
 - The Smithy CLI resolves pinned `smithy-typescript` artifacts from Maven
   Central and loads the small integration JAR vendored with the npm package.
 - The integration emits TanStack Query keys and query-options factories using
@@ -50,6 +52,13 @@ Gradle is only needed by maintainers after changing the Java integration:
 
 ```sh
 npm run build:integration
+```
+
+The platform packages are prepared for publishing from checksum-verified
+official Smithy archives. Prepare every supported package with:
+
+```sh
+npm run prepare:cli -- --platform all
 ```
 
 See [PLAN.md](./PLAN.md) for the intended product and remaining milestones.

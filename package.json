@@ -3,11 +3,13 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*",
+    "packages/codegen",
+    "packages/vite",
     "examples/*"
   ],
   "scripts": {
     "build:integration": "gradle -p codegen publish",
+    "prepare:cli": "node scripts/prepare-smithy-cli-packages.mjs",
     "generate": "npm run generate --workspace @smithy-react/example-vite",
     "dev": "npm run dev --workspace @smithy-react/example-vite",
     "build": "npm run build --workspace @smithy-react/example-vite",
@@ -16,5 +18,8 @@
   },
   "engines": {
     "node": ">=20.19"
+  },
+  "devDependencies": {
+    "fflate": "^0.8.2"
   }
 }

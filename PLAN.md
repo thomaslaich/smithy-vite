@@ -230,6 +230,13 @@ platform-specific optional npm packages in Milestone 2. The download-based
 implementation remains in the Milestone 1 commit as validated feasibility
 evidence, not as the intended release architecture.
 
+The platform-package implementation uses one package for each supported Node
+OS/architecture tuple. `@smithy-react/codegen` resolves an exact optional
+dependency and never downloads tools during installation or generation. A
+maintainer-only preparation script downloads the official archives, verifies
+their pinned checksums, and stages complete distributions—including their legal
+files—for npm publishing.
+
 - Smithy CLI 1.73.0 is downloaded on demand into a user cache. Each supported
   platform archive is pinned by SHA-256, and the distribution includes its own
   Java runtime. `SMITHY_REACT_SMITHY` remains available as an explicit

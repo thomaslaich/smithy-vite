@@ -16,8 +16,12 @@
     "src",
     "vendor"
   ],
-  "dependencies": {
-    "fflate": "^0.8.2"
+  "optionalDependencies": {
+    "@smithy-react/smithy-cli-darwin-arm64": "0.0.1-spike",
+    "@smithy-react/smithy-cli-darwin-x64": "0.0.1-spike",
+    "@smithy-react/smithy-cli-linux-arm64": "0.0.1-spike",
+    "@smithy-react/smithy-cli-linux-x64": "0.0.1-spike",
+    "@smithy-react/smithy-cli-win32-x64": "0.0.1-spike"
   },
   "engines": {
     "node": ">=20.19"
