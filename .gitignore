@@ -1,0 +1,7 @@
+node_modules/
+.gradle/
+.smithy-react/
+dist/
+build/
+.DS_Store
+examples/vite-react/src/generated/

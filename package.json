@@ -1,0 +1,20 @@
+{
+  "name": "smithy-react-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "build:integration": "gradle -p codegen publish",
+    "generate": "npm run generate --workspace @smithy-react/example-vite",
+    "dev": "npm run dev --workspace @smithy-react/example-vite",
+    "build": "npm run build --workspace @smithy-react/example-vite",
+    "typecheck": "npm run typecheck --workspace @smithy-react/example-vite",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

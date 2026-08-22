@@ -1,0 +1,25 @@
+{
+  "name": "@smithy-react/codegen",
+  "version": "0.0.1-spike",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "bin": {
+    "smithy-react": "./src/cli.js"
+  },
+  "files": [
+    "src",
+    "vendor"
+  ],
+  "dependencies": {
+    "fflate": "^0.8.2"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "sources": ["model"],
+  "service": "example.weather#Weather",
+  "output": "src/generated/weather",
+  "packageName": "@smithy-react/example-weather-client"
+}
