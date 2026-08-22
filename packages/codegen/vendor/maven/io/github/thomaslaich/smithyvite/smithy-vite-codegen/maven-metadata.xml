@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>io.github.thomaslaich.smithyvite</groupId>
+  <artifactId>smithy-vite-codegen</artifactId>
+  <versioning>
+    <latest>0.0.1-spike</latest>
+    <release>0.0.1-spike</release>
+    <versions>
+      <version>0.0.1-spike</version>
+    </versions>
+    <lastUpdated>20260822123930</lastUpdated>
+  </versioning>
+</metadata>

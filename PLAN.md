@@ -1,30 +1,31 @@
-# Smithy React plan
+# Smithy Vite plan
 
 ## Product direction
 
-Smithy React should provide an npm-native frontend development experience for
-Smithy services. Its first integration will target Vite and React, while the
-code generation core remains independent of any particular build tool.
+Smithy Vite should provide an npm-native, framework-neutral Vite development
+experience for Smithy services. The first example and query adapter target
+React, while the code generation core and Vite lifecycle remain independent of
+the UI framework.
 
 The generator must use `smithy-typescript` directly. It must not project Smithy
-to OpenAPI or implement a second HTTP client. Optional TanStack React Query
-artifacts wrap the generated Smithy client.
+to OpenAPI or implement a second HTTP client. Optional framework adapters, the
+first of which targets TanStack React Query, wrap the generated Smithy client.
 
 The intended user experience is:
 
 ```sh
-npm install --save-dev @smithy-react/vite
+npm install --save-dev @smithy-vite/plugin
 npm install @tanstack/react-query
 ```
 
 ```ts
 // vite.config.ts
 import { defineConfig } from "vite";
-import { smithyReact } from "@smithy-react/vite";
+import { smithyVite } from "@smithy-vite/plugin";
 
 export default defineConfig({
   plugins: [
-    smithyReact({
+    smithyVite({
       sources: ["./model"],
       service: "example.weather#Weather",
       tanstackQuery: {
@@ -42,8 +43,10 @@ build, or manual Maven configuration.
 
 ## Decisions
 
-- The GitHub repository is named `smithy-react`.
-- The product is React-focused, with Vite as the first build integration.
+- The GitHub repository is named `smithy-vite`.
+- The product is Vite-focused and UI-framework-neutral.
+- React Query is the first optional TanStack adapter; Svelte Query and Solid
+  Query are compatible future directions rather than second-class use cases.
 - A shared code generation core supports both build-tool integrations and a
   standalone CI command.
 - `smithy-typescript` owns client types, commands, protocols, serialization,
@@ -54,27 +57,29 @@ build, or manual Maven configuration.
 - Named hooks are opt-in convenience wrappers over the option factories.
 - Generated output is physical source code so TypeScript, editors, tests, and
   non-Vite tools can resolve it.
-- Next.js and Nx integrations are deferred until the core and generated API are
-  stable.
+- Non-Vite build integrations such as Next.js and Nx are deferred until the
+  core and generated API are stable.
 
 ## Package structure
 
-The initial repository is a monorepo with two published npm packages:
+The initial repository is a monorepo with two user-facing npm packages and
+internal platform packages for the Smithy CLI:
 
 ```text
-smithy-react/
+smithy-vite/
 ├── packages/
-│   ├── codegen/       # @smithy-react/codegen
-│   └── vite/          # @smithy-react/vite
+│   ├── codegen/       # @smithy-vite/codegen
+│   ├── plugin/        # @smithy-vite/plugin
+│   └── smithy-cli-*/  # platform-specific optional dependencies
 ├── codegen/
-│   └── smithy-react-codegen/  # JVM smithy-typescript integration
+│   └── smithy-vite-codegen/  # JVM smithy-typescript integration
 ├── examples/
 │   ├── vite-client/
 │   └── vite-tanstack-query/
 └── website/
 ```
 
-`@smithy-react/codegen` contains:
+`@smithy-vite/codegen` contains:
 
 - The standalone CLI and programmatic API.
 - Smithy CLI acquisition and invocation.
@@ -82,28 +87,30 @@ smithy-react/
 - Generation configuration, caching, diagnostics, and output management.
 - Optional TanStack React Query generation.
 
-`@smithy-react/vite` contains:
+`@smithy-vite/plugin` contains:
 
-- A thin Vite adapter over `@smithy-react/codegen`.
+- A thin Vite adapter over `@smithy-vite/codegen`.
 - Development and production build hooks.
 - Model watching and regeneration.
 - Vite-compatible diagnostics.
 
 The Vite package depends on the codegen package, so ordinary Vite users only
-need to install `@smithy-react/vite`. TanStack generation initially remains a
+need to install `@smithy-vite/plugin`. TanStack generation initially remains a
 codegen option rather than a separate npm package because the generator only
 emits imports from the consumer's `@tanstack/react-query` dependency.
 
 Possible future packages are:
 
 ```text
-@smithy-react/next
-@smithy-react/tanstack-query
-@smithy-react/nx
+@smithy-vite/react-query
+@smithy-vite/svelte-query
+@smithy-vite/solid-query
+@smithy-vite/nx
 ```
 
-The TanStack integration should become a separate package only if it develops
-an independently useful runtime or extension API.
+React Query generation remains a codegen option during the spike. Framework
+adapters should become separate packages once their common extension contract
+is understood.
 
 ## Architecture
 
@@ -111,17 +118,18 @@ an independently useful runtime or extension API.
 Smithy model
     │
     ▼
-@smithy-react/codegen
+@smithy-vite/codegen
     │
     ├── native Smithy CLI
     │       └── smithy-typescript
     │               └── generated client, commands, inputs, and outputs
     │
     └── Smithy TypeScript integration
-            └── query keys, query options, mutation options, pagination,
-                and optional React hooks
+            └── selected framework adapter
+                    └── query keys, query options, mutation options,
+                        pagination, and optional framework conveniences
 
-@smithy-react/vite
+@smithy-vite/plugin
     └── invokes and watches the shared generator during Vite development/build
 ```
 
@@ -231,23 +239,24 @@ implementation remains in the Milestone 1 commit as validated feasibility
 evidence, not as the intended release architecture.
 
 The platform-package implementation uses one package for each supported Node
-OS/architecture tuple. `@smithy-react/codegen` resolves an exact optional
+OS/architecture tuple. `@smithy-vite/codegen` resolves an exact optional
 dependency and never downloads tools during installation or generation. A
 maintainer-only preparation script downloads the official archives, verifies
 their pinned checksums, and stages complete distributions—including their legal
 files—for npm publishing.
 
-- Smithy CLI 1.73.0 is downloaded on demand into a user cache. Each supported
-  platform archive is pinned by SHA-256, and the distribution includes its own
-  Java runtime. `SMITHY_REACT_SMITHY` remains available as an explicit
-  development override.
+- The original spike downloaded Smithy CLI 1.73.0 on demand and verified its
+  SHA-256 digest. That proved the distribution's bundled Java runtime removes
+  the system-Java requirement. The current implementation packages the same
+  verified distribution through platform-specific optional npm dependencies;
+  `SMITHY_VITE_SMITHY` remains an explicit development override.
 - `smithy-typescript` and its AWS protocol integration are resolved directly by
   the Smithy CLI from Maven Central at pinned version 0.52.0. Consumers do not
   need Maven or Gradle configuration.
 - The custom `TypeScriptIntegration` is built once by maintainers and included
-  in `@smithy-react/codegen` as a tiny file-based Maven repository. Gradle is
+  in `@smithy-vite/codegen` as a tiny file-based Maven repository. Gradle is
   not invoked during npm installation, generation, or a Vite build.
-- `@smithy-react/codegen` creates `.smithy-react/smithy-build.json`; it is an
+- `@smithy-vite/codegen` creates `.smithy-vite/smithy-build.json`; it is an
   implementation detail rather than a user-owned configuration file.
 - Upstream output is copied atomically to the configured physical source
   directory. The spike uses `src/generated/weather`, which is directly visible
@@ -277,9 +286,9 @@ files—for npm publishing.
 Implement:
 
 - A typed configuration API shared by the CLI and integrations.
-- `smithy-react generate` and `smithy-react check` commands.
+- `smithy-vite generate` and `smithy-vite check` commands.
 - Tool and generator version pinning.
-- Checksum verification for downloaded tools.
+- Verification of platform-package contents and upstream archive integrity.
 - Offline caches with understandable invalidation behavior.
 - A generation key derived from the model closure, configuration, dependencies,
   and tool versions.
@@ -352,7 +361,7 @@ before stabilizing the public configuration API.
 
 A new Vite React application can:
 
-1. Install `@smithy-react/vite` from npm.
+1. Install `@smithy-vite/plugin` from npm.
 2. Point the plugin at local Smithy sources and a service shape.
 3. Run `vite` and immediately import a generated client.
 4. Enable TanStack React Query generation with one configuration block.
@@ -367,7 +376,7 @@ package build, or manual Maven setup.
 
 - Next.js integration and React Server Component behavior.
 - Nx task inference and caching integration.
-- Vue, Solid, Svelte, Angular, or Preact Query adapters.
+- Framework adapters beyond the initial React Query integration.
 - Automatic mutation invalidation.
 - Optimistic-update generation.
 - A general plugin marketplace.
@@ -385,6 +394,6 @@ Next.js, Nx, or another TanStack framework.
   is the closest OpenAPI-based developer-experience benchmark.
 - [`@aws/nx-plugin`](https://awslabs.github.io/nx-plugin-for-aws/en/guides/connection/react-smithy/)
   demonstrates Nx-orchestrated Smithy-to-OpenAPI client and TanStack generation.
-  Its orchestration and generated API are useful references, but Smithy React
+  Its orchestration and generated API are useful references, but Smithy Vite
   should use `smithy-typescript` directly and should not require Nx or an OpenAPI
   projection.

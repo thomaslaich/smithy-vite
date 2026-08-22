@@ -1,19 +1,19 @@
 {
-  "name": "smithy-react-workspace",
+  "name": "smithy-vite-workspace",
   "private": true,
   "type": "module",
   "workspaces": [
     "packages/codegen",
-    "packages/vite",
+    "packages/plugin",
     "examples/*"
   ],
   "scripts": {
     "build:integration": "gradle -p codegen publish",
     "prepare:cli": "node scripts/prepare-smithy-cli-packages.mjs",
-    "generate": "npm run generate --workspace @smithy-react/example-vite",
-    "dev": "npm run dev --workspace @smithy-react/example-vite",
-    "build": "npm run build --workspace @smithy-react/example-vite",
-    "typecheck": "npm run typecheck --workspace @smithy-react/example-vite",
+    "generate": "npm run generate --workspace @smithy-vite/example-vite",
+    "dev": "npm run dev --workspace @smithy-vite/example-vite",
+    "build": "npm run build --workspace @smithy-vite/example-vite",
+    "typecheck": "npm run typecheck --workspace @smithy-vite/example-vite",
     "smoke": "node scripts/smoke.mjs"
   },
   "engines": {

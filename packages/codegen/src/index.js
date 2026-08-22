@@ -9,21 +9,21 @@ const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const smithyTypescriptVersion = "0.52.0";
 const integrationVersion = "0.0.1-spike";
 const smithyCliPackages = {
-  "darwin-arm64": "@smithy-react/smithy-cli-darwin-arm64",
-  "darwin-x64": "@smithy-react/smithy-cli-darwin-x64",
-  "linux-arm64": "@smithy-react/smithy-cli-linux-arm64",
-  "linux-x64": "@smithy-react/smithy-cli-linux-x64",
-  "win32-x64": "@smithy-react/smithy-cli-win32-x64"
+  "darwin-arm64": "@smithy-vite/smithy-cli-darwin-arm64",
+  "darwin-x64": "@smithy-vite/smithy-cli-darwin-x64",
+  "linux-arm64": "@smithy-vite/smithy-cli-linux-arm64",
+  "linux-x64": "@smithy-vite/smithy-cli-linux-x64",
+  "win32-x64": "@smithy-vite/smithy-cli-win32-x64"
 };
 
 async function resolveSmithyCli() {
-  if (process.env.SMITHY_REACT_SMITHY) {
-    return { executable: process.env.SMITHY_REACT_SMITHY, arguments: [] };
+  if (process.env.SMITHY_VITE_SMITHY) {
+    return { executable: process.env.SMITHY_VITE_SMITHY, arguments: [] };
   }
 
   const packageName = smithyCliPackages[`${process.platform}-${process.arch}`];
   if (!packageName) {
-    throw new Error(`Smithy React does not yet provide a Smithy CLI for ${process.platform}-${process.arch}`);
+    throw new Error(`Smithy Vite does not yet provide a Smithy CLI for ${process.platform}-${process.arch}`);
   }
 
   try {
@@ -33,14 +33,14 @@ async function resolveSmithyCli() {
   } catch (packageError) {
     try {
       const localPackage = await import(
-        pathToFileURL(resolve(packageRoot, "..", packageName.slice("@smithy-react/".length), "index.js"))
+        pathToFileURL(resolve(packageRoot, "..", packageName.slice("@smithy-vite/".length), "index.js"))
       );
       await access(localPackage.smithyCommand.executable);
       return localPackage.smithyCommand;
     } catch {
       throw new Error(
         `The optional package ${packageName} is unavailable. Reinstall without omitting optional dependencies, `
-          + "or set SMITHY_REACT_SMITHY to an existing Smithy CLI executable.",
+          + "or set SMITHY_VITE_SMITHY to an existing Smithy CLI executable.",
         { cause: packageError }
       );
     }
@@ -50,7 +50,7 @@ async function resolveSmithyCli() {
 export async function generate(options) {
   const root = resolve(options.root ?? process.cwd());
   const output = resolve(root, options.output);
-  const work = resolve(root, ".smithy-react");
+  const work = resolve(root, ".smithy-vite");
   const smithyOutput = join(work, "smithy-output");
   const generated = join(smithyOutput, "source", "typescript-client-codegen");
   const staged = `${output}.next`;
@@ -62,18 +62,18 @@ export async function generate(options) {
     sources: options.sources.map(source => resolve(root, source)),
     maven: {
       repositories: [
-        { id: "smithy-react", url: pathToFileURL(localMaven).href },
+        { id: "smithy-vite", url: pathToFileURL(localMaven).href },
         { id: "central", url: "https://repo.maven.apache.org/maven2" }
       ],
       dependencies: [
         `software.amazon.smithy.typescript:smithy-aws-typescript-codegen:${smithyTypescriptVersion}`,
-        `dev.smithy-react:smithy-react-codegen:${integrationVersion}`
+        `io.github.thomaslaich.smithyvite:smithy-vite-codegen:${integrationVersion}`
       ]
     },
     plugins: {
       "typescript-client-codegen": {
         service: options.service,
-        package: options.packageName ?? "@smithy-react/generated-client",
+        package: options.packageName ?? "@smithy-vite/generated-client",
         packageVersion: "0.0.0",
         private: true
       }

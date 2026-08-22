@@ -1,14 +1,14 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { smithyReact } from "@smithy-react/vite";
+import { smithyVite } from "@smithy-vite/plugin";
 
 export default defineConfig({
   plugins: [
-    smithyReact({
+    smithyVite({
       sources: ["model"],
       service: "example.weather#Weather",
       output: "src/generated/weather",
-      packageName: "@smithy-react/example-weather-client",
+      packageName: "@smithy-vite/example-weather-client",
     }),
     react(),
     {

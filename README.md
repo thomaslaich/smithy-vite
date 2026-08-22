@@ -1,8 +1,8 @@
-# Smithy React
+# Smithy Vite
 
 An npm-native experiment for generating browser clients directly from Smithy
-models with `smithy-typescript`, Vite, React, and optional TanStack Query
-adapters.
+models with `smithy-typescript` and Vite, with optional framework adapters such
+as TanStack React Query.
 
 This repository currently contains the Milestone 1 feasibility spike. The API
 is intentionally not ready for publication.
@@ -37,14 +37,14 @@ npm run smoke
 
 ## Spike architecture
 
-- `@smithy-react/codegen` selects a platform-specific optional npm package,
+- `@smithy-vite/codegen` selects a platform-specific optional npm package,
   writes an ephemeral `smithy-build.json`, and invokes its bundled Smithy CLI
   from Node.
 - The Smithy CLI resolves pinned `smithy-typescript` artifacts from Maven
   Central and loads the small integration JAR vendored with the npm package.
 - The integration emits TanStack Query keys and query-options factories using
   Smithy's model and generated symbols.
-- `@smithy-react/vite` runs generation for development and production builds,
+- `@smithy-vite/plugin` runs generation for development and production builds,
   watches model sources, and selects the browser runtime configuration from the
   upstream generated client.
 

@@ -1,5 +1,5 @@
 {
-  "name": "@smithy-react/codegen",
+  "name": "@smithy-vite/codegen",
   "version": "0.0.1-spike",
   "private": true,
   "type": "module",
@@ -10,18 +10,18 @@
     }
   },
   "bin": {
-    "smithy-react": "./src/cli.js"
+    "smithy-vite": "./src/cli.js"
   },
   "files": [
     "src",
     "vendor"
   ],
   "optionalDependencies": {
-    "@smithy-react/smithy-cli-darwin-arm64": "0.0.1-spike",
-    "@smithy-react/smithy-cli-darwin-x64": "0.0.1-spike",
-    "@smithy-react/smithy-cli-linux-arm64": "0.0.1-spike",
-    "@smithy-react/smithy-cli-linux-x64": "0.0.1-spike",
-    "@smithy-react/smithy-cli-win32-x64": "0.0.1-spike"
+    "@smithy-vite/smithy-cli-darwin-arm64": "0.0.1-spike",
+    "@smithy-vite/smithy-cli-darwin-x64": "0.0.1-spike",
+    "@smithy-vite/smithy-cli-linux-arm64": "0.0.1-spike",
+    "@smithy-vite/smithy-cli-linux-x64": "0.0.1-spike",
+    "@smithy-vite/smithy-cli-win32-x64": "0.0.1-spike"
   },
   "engines": {
     "node": ">=20.19"

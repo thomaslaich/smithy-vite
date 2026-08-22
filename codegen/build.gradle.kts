@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
 }
 
-group = "dev.smithy-react"
+group = "io.github.thomaslaich.smithyvite"
 version = "0.0.1-spike"
 
 repositories {

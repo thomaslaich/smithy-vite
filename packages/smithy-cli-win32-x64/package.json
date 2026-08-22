@@ -1,7 +1,7 @@
 {
-  "name": "@smithy-react/smithy-cli-win32-x64",
+  "name": "@smithy-vite/smithy-cli-win32-x64",
   "version": "0.0.1-spike",
-  "description": "Smithy CLI for Windows x64, used by Smithy React",
+  "description": "Smithy CLI for Windows x64, used by Smithy Vite",
   "type": "module",
   "os": ["win32"],
   "cpu": ["x64"],

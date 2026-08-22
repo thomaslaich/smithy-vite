@@ -1,7 +1,7 @@
 {
-  "name": "@smithy-react/smithy-cli-darwin-x64",
+  "name": "@smithy-vite/smithy-cli-darwin-x64",
   "version": "0.0.1-spike",
-  "description": "Smithy CLI for macOS x64, used by Smithy React",
+  "description": "Smithy CLI for macOS x64, used by Smithy Vite",
   "type": "module",
   "os": ["darwin"],
   "cpu": ["x64"],

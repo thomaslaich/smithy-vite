@@ -70,5 +70,5 @@ for (const platform of platforms) {
     }
   }
 
-  console.log(`Prepared @smithy-react/smithy-cli-${platform} with Smithy CLI ${smithyVersion}`);
+  console.log(`Prepared @smithy-vite/smithy-cli-${platform} with Smithy CLI ${smithyVersion}`);
 }

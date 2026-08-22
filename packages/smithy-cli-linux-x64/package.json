@@ -1,7 +1,7 @@
 {
-  "name": "@smithy-react/smithy-cli-linux-x64",
+  "name": "@smithy-vite/smithy-cli-linux-x64",
   "version": "0.0.1-spike",
-  "description": "Smithy CLI for Linux x64, used by Smithy React",
+  "description": "Smithy CLI for Linux x64, used by Smithy Vite",
   "type": "module",
   "os": ["linux"],
   "cpu": ["x64"],

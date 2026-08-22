@@ -11,7 +11,7 @@ export function App() {
 
   return (
     <main>
-      <h1>Smithy React</h1>
+      <h1>Smithy Vite</h1>
       <pre>{JSON.stringify(city.data ?? { status: city.status }, null, 2)}</pre>
     </main>
   );

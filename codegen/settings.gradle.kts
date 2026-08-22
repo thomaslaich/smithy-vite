@@ -1,1 +1,1 @@
-rootProject.name = "smithy-react-codegen"
+rootProject.name = "smithy-vite-codegen"

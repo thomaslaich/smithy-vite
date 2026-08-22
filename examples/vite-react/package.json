@@ -1,10 +1,10 @@
 {
-  "name": "@smithy-react/example-vite",
+  "name": "@smithy-vite/example-vite",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "generate": "smithy-react --config smithy-react.json",
+    "generate": "smithy-vite --config smithy-vite.json",
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit"
@@ -21,8 +21,8 @@
     "tslib": "^2.6.2"
   },
   "devDependencies": {
-    "@smithy-react/codegen": "0.0.1-spike",
-    "@smithy-react/vite": "0.0.1-spike",
+    "@smithy-vite/codegen": "0.0.1-spike",
+    "@smithy-vite/plugin": "0.0.1-spike",
     "@tsconfig/node20": "20.1.8",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
