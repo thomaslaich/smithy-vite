@@ -7,7 +7,7 @@ use aws.protocols#restJson1
 @restJson1
 service Weather {
     version: "2026-08-22"
-    operations: [GetCity]
+    operations: [GetCity, UpdateCity]
 }
 
 @readonly
@@ -17,6 +17,31 @@ operation GetCity {
         @required
         @httpLabel
         cityId: String
+    }
+
+    output := {
+        @required
+        name: String
+
+        @required
+        temperatureCelsius: Float
+
+        humidityPercent: Float
+
+        windSpeedKph: Float
+    }
+}
+
+@idempotent
+@http(method: "PUT", uri: "/cities/{cityId}", code: 200)
+operation UpdateCity {
+    input := {
+        @required
+        @httpLabel
+        cityId: String
+
+        @required
+        temperatureCelsius: Float
     }
 
     output := {

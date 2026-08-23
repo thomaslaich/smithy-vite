@@ -1,6 +1,6 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import vue from "@vitejs/plugin-vue";
 import { smithyVite } from "@smithy-vite/plugin";
+import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [
@@ -8,9 +8,12 @@ export default defineConfig({
       sources: ["model"],
       service: "example.weather#Weather",
       output: "src/generated/weather",
-      packageName: "@smithy-vite/example-weather-client",
+      packageName: "@smithy-vite/example-vue-weather-client",
+      tanstackQuery: {
+        framework: "vue",
+      },
     }),
-    react(),
+    vue(),
     {
       name: "weather-service-mock",
       configureServer(server) {

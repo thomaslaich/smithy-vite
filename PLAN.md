@@ -4,8 +4,8 @@
 
 `smithy-vite` should provide an npm-native, framework-neutral Vite development
 experience for Smithy services. The verified query adapters target React,
-Preact, and Solid, while the code generation core and Vite lifecycle remain
-independent of the UI framework.
+Preact, Solid, Vue, and Angular, while the code generation core and Vite
+lifecycle remain independent of the UI framework.
 
 The generator must use `smithy-typescript` directly. It must not project Smithy
 to OpenAPI or implement a second HTTP client. Optional framework adapters wrap
@@ -45,9 +45,9 @@ build, or manual Maven configuration.
 
 - The GitHub repository is named `smithy-vite`.
 - The product is Vite-focused and UI-framework-neutral.
-- React Query, Preact Query, and Solid Query are the first TanStack adapters;
-  Svelte Query is a compatible future direction rather than a second-class use
-  case.
+- React Query, Preact Query, Solid Query, Vue Query, and experimental Angular
+  Query are the first TanStack adapters; Svelte Query is a compatible future
+  direction rather than a second-class use case.
 - A shared code generation core supports both build-tool integrations and a
   standalone CI command.
 - `smithy-typescript` owns client types, commands, protocols, serialization,
@@ -58,6 +58,10 @@ build, or manual Maven configuration.
 - Named hooks are opt-in convenience wrappers over the option factories.
 - Generated output is physical source code so TypeScript, editors, tests, and
   non-Vite tools can resolve it.
+- The default published toolchain should bundle the platform CLI and the entire
+  pinned Maven code-generation closure so generation is network-free.
+- An explicit external-toolchain mode should delegate both CLI selection and
+  Maven resolution to the user. Hybrid modes are intentionally avoided.
 - Non-Vite build integrations such as Next.js and Nx are deferred until the
   core and generated API are stable.
 
@@ -77,7 +81,9 @@ smithy-vite/
 ├── examples/
 │   ├── vite-react/
 │   ├── vite-preact/
-│   └── vite-solid/
+│   ├── vite-solid/
+│   ├── vite-vue/
+│   └── vite-angular/
 └── website/
 ```
 
@@ -87,7 +93,8 @@ smithy-vite/
 - Smithy CLI acquisition and invocation.
 - Pinned Smithy and `smithy-typescript` versions.
 - Generation configuration, caching, diagnostics, and output management.
-- Framework-native TanStack React Query, Preact Query, and Solid Query generation.
+- Framework-native TanStack Query generation for React, Preact, Solid, Vue, and
+  Angular.
 
 `@smithy-vite/plugin` contains:
 
@@ -101,20 +108,16 @@ need to install `@smithy-vite/plugin`. TanStack generation initially remains a
 codegen option rather than a separate npm package because the generator emits
 imports from the consumer's framework-specific TanStack Query dependency.
 
-Possible future packages are:
+One possible future package is:
 
 ```text
-@smithy-vite/react-query
-@smithy-vite/preact-query
-@smithy-vite/svelte-query
-@smithy-vite/solid-query
 @smithy-vite/nx
 ```
 
-React Query, Preact Query, and Solid Query generation remain codegen options
-during the spike.
-Framework adapters should become separate packages only once their common
-runtime or extension contract is understood.
+Framework adapter generation remains a codegen option. Separate framework
+packages are not planned while the adapters generate source that imports each
+framework's native runtime directly; they would add package boundaries without
+providing a shared runtime or extension contract.
 
 ## Architecture
 
@@ -294,6 +297,8 @@ Implement:
 - Tool and generator version pinning.
 - Verification of platform-package contents and upstream archive integrity.
 - Offline caches with understandable invalidation behavior.
+- A fully bundled default Maven closure and an explicit, all-external toolchain
+  mode, with no partially bundled resolution path.
 - A generation key derived from the model closure, configuration, dependencies,
   and tool versions.
 - Serialized generation so concurrent build hooks cannot corrupt output.
@@ -380,7 +385,8 @@ package build, or manual Maven setup.
 
 - Next.js integration and React Server Component behavior.
 - Nx task inference and caching integration.
-- Framework adapters beyond the verified React, Preact, and Solid Query integrations.
+- Framework adapters beyond the verified React, Preact, Solid, Vue, and Angular
+  Query integrations.
 - Automatic mutation invalidation.
 - Optimistic-update generation.
 - A general plugin marketplace.

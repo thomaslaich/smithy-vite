@@ -1,0 +1,7 @@
+<main>
+  <h1>smithy-vite + Angular</h1>
+  <pre>{{ city.data() ?? { status: city.status() } | json }}</pre>
+  <button [disabled]="updateCity.isPending()" (click)="save()">
+    {{ updateCity.isPending() ? "Saving…" : "Set temperature to 22.5 °C" }}
+  </button>
+</main>

@@ -1,16 +1,22 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import angular from "@analogjs/vite-plugin-angular";
 import { smithyVite } from "@smithy-vite/plugin";
+import { defineConfig } from "vite";
 
 export default defineConfig({
+  resolve: {
+    mainFields: ["module"],
+  },
   plugins: [
+    angular(),
     smithyVite({
       sources: ["model"],
       service: "example.weather#Weather",
       output: "src/generated/weather",
-      packageName: "@smithy-vite/example-weather-client",
+      packageName: "@smithy-vite/example-angular-weather-client",
+      tanstackQuery: {
+        framework: "angular",
+      },
     }),
-    react(),
     {
       name: "weather-service-mock",
       configureServer(server) {

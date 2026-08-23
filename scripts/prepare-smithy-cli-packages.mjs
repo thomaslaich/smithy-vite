@@ -28,22 +28,32 @@ const distributions = {
 };
 
 const platformFlag = process.argv.indexOf("--platform");
-const requested = platformFlag === -1 ? `${process.platform}-${process.arch}` : process.argv[platformFlag + 1];
-const platforms = requested === "all" ? Object.keys(distributions) : [requested];
+const requested =
+  platformFlag === -1
+    ? `${process.platform}-${process.arch}`
+    : process.argv[platformFlag + 1];
+const platforms =
+  requested === "all" ? Object.keys(distributions) : [requested];
 
 for (const platform of platforms) {
   const distribution = distributions[platform];
-  if (!distribution) throw new Error(`Unsupported Smithy CLI package platform: ${platform}`);
+  if (!distribution)
+    throw new Error(`Unsupported Smithy CLI package platform: ${platform}`);
 
   const archiveName = `smithy-cli-${distribution.asset}.zip`;
   const url = `https://github.com/smithy-lang/smithy/releases/download/${smithyVersion}/${archiveName}`;
   console.log(`Downloading ${archiveName}`);
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`Unable to download ${archiveName}: HTTP ${response.status}`);
+  if (!response.ok)
+    throw new Error(
+      `Unable to download ${archiveName}: HTTP ${response.status}`,
+    );
   const bytes = Buffer.from(await response.arrayBuffer());
   const actualDigest = createHash("sha256").update(bytes).digest("hex");
   if (actualDigest !== distribution.digest) {
-    throw new Error(`Checksum mismatch for ${archiveName}: expected ${distribution.digest}, received ${actualDigest}`);
+    throw new Error(
+      `Checksum mismatch for ${archiveName}: expected ${distribution.digest}, received ${actualDigest}`,
+    );
   }
 
   const packageRoot = resolve(`packages/smithy-cli-${platform}`);
@@ -52,7 +62,8 @@ for (const platform of platforms) {
   await rm(vendorRoot, { recursive: true, force: true });
 
   for (const [name, contents] of Object.entries(unzipSync(bytes))) {
-    if (!name.startsWith(archiveRoot)) throw new Error(`Unexpected archive path: ${name}`);
+    if (!name.startsWith(archiveRoot))
+      throw new Error(`Unexpected archive path: ${name}`);
     const relativeName = name.slice(archiveRoot.length);
     if (!relativeName) continue;
     const destination = resolve(vendorRoot, relativeName);
@@ -65,10 +76,15 @@ for (const platform of platforms) {
     }
     await mkdir(dirname(destination), { recursive: true });
     await writeFile(destination, contents);
-    if (platform !== "win32-x64" && (relativeName.startsWith("bin/") || relativeName === "lib/jspawnhelper")) {
+    if (
+      platform !== "win32-x64" &&
+      (relativeName.startsWith("bin/") || relativeName === "lib/jspawnhelper")
+    ) {
       await chmod(destination, 0o755);
     }
   }
 
-  console.log(`Prepared @smithy-vite/smithy-cli-${platform} with Smithy CLI ${smithyVersion}`);
+  console.log(
+    `Prepared @smithy-vite/smithy-cli-${platform} with Smithy CLI ${smithyVersion}`,
+  );
 }

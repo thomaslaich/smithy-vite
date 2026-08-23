@@ -14,11 +14,11 @@ try {
   }
 }
 
-const hasJar = files.some(file => file.endsWith(".jar"));
-const hasPom = files.some(file => file.endsWith(".pom"));
+const hasJar = files.some((file) => file.endsWith(".jar"));
+const hasPom = files.some((file) => file.endsWith(".pom"));
 
 if (!hasJar || !hasPom) {
   throw new Error(
-    "The bundled Maven repository is empty. Run `npm run build:integration` from the repository root before packing @smithy-vite/codegen."
+    "The bundled Maven repository is empty. Run `npm run build:integration` from the repository root before packing @smithy-vite/codegen.",
   );
 }

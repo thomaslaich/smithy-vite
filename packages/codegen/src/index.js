@@ -1,5 +1,13 @@
 import { execFile } from "node:child_process";
-import { access, cp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  cp,
+  mkdir,
+  readFile,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -13,7 +21,7 @@ const smithyCliPackages = {
   "darwin-x64": "@smithy-vite/smithy-cli-darwin-x64",
   "linux-arm64": "@smithy-vite/smithy-cli-linux-arm64",
   "linux-x64": "@smithy-vite/smithy-cli-linux-x64",
-  "win32-x64": "@smithy-vite/smithy-cli-win32-x64"
+  "win32-x64": "@smithy-vite/smithy-cli-win32-x64",
 };
 
 async function resolveSmithyCli() {
@@ -23,7 +31,9 @@ async function resolveSmithyCli() {
 
   const packageName = smithyCliPackages[`${process.platform}-${process.arch}`];
   if (!packageName) {
-    throw new Error(`Smithy Vite does not yet provide a Smithy CLI for ${process.platform}-${process.arch}`);
+    throw new Error(
+      `Smithy Vite does not yet provide a Smithy CLI for ${process.platform}-${process.arch}`,
+    );
   }
 
   try {
@@ -33,15 +43,22 @@ async function resolveSmithyCli() {
   } catch (packageError) {
     try {
       const localPackage = await import(
-        pathToFileURL(resolve(packageRoot, "..", packageName.slice("@smithy-vite/".length), "index.js"))
+        pathToFileURL(
+          resolve(
+            packageRoot,
+            "..",
+            packageName.slice("@smithy-vite/".length),
+            "index.js",
+          ),
+        )
       );
       await access(localPackage.smithyCommand.executable);
       return localPackage.smithyCommand;
     } catch {
       throw new Error(
-        `The optional package ${packageName} is unavailable. Reinstall without omitting optional dependencies, `
-          + "or set SMITHY_VITE_SMITHY to an existing Smithy CLI executable.",
-        { cause: packageError }
+        `The optional package ${packageName} is unavailable. Reinstall without omitting optional dependencies, ` +
+          "or set SMITHY_VITE_SMITHY to an existing Smithy CLI executable.",
+        { cause: packageError },
       );
     }
   }
@@ -68,34 +85,38 @@ export async function generate(options) {
   const tanstackFramework = options.tanstackQuery?.framework ?? "react";
 
   if (
-    tanstackFramework !== "react"
-    && tanstackFramework !== "preact"
-    && tanstackFramework !== "solid"
+    tanstackFramework !== "react" &&
+    tanstackFramework !== "preact" &&
+    tanstackFramework !== "solid" &&
+    tanstackFramework !== "vue" &&
+    tanstackFramework !== "angular"
   ) {
-    throw new Error(`Unsupported TanStack Query framework: ${tanstackFramework}`);
+    throw new Error(
+      `Unsupported TanStack Query framework: ${tanstackFramework}`,
+    );
   }
 
   const config = {
     version: "1.0",
-    sources: options.sources.map(source => resolve(root, source)),
+    sources: options.sources.map((source) => resolve(root, source)),
     maven: {
       repositories: [
         { id: "smithy-vite", url: pathToFileURL(localMaven).href },
-        { id: "central", url: "https://repo.maven.apache.org/maven2" }
+        { id: "central", url: "https://repo.maven.apache.org/maven2" },
       ],
       dependencies: [
         `software.amazon.smithy.typescript:smithy-aws-typescript-codegen:${smithyTypescriptVersion}`,
-        `io.github.thomaslaich.smithyvite:smithy-vite-codegen:${integrationVersion}`
-      ]
+        `io.github.thomaslaich.smithyvite:smithy-vite-codegen:${integrationVersion}`,
+      ],
     },
     plugins: {
       "typescript-client-codegen": {
         service: options.service,
         package: options.packageName ?? "@smithy-vite/generated-client",
         packageVersion: "0.0.0",
-        private: true
-      }
-    }
+        private: true,
+      },
+    },
   };
 
   await rm(smithyOutput, { recursive: true, force: true });
@@ -106,25 +127,32 @@ export async function generate(options) {
   await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);
 
   try {
-    await execFileAsync(smithy.executable, [
-      ...smithy.arguments,
-      "build",
-      "--config",
-      configPath,
-      "--output",
-      smithyOutput
-    ], {
-      cwd: root,
-      env: {
-        ...process.env,
-        SMITHY_MAVEN_CACHE: mavenCache,
-        SMITHY_VITE_TANSTACK_FRAMEWORK: tanstackFramework,
+    await execFileAsync(
+      smithy.executable,
+      [
+        ...smithy.arguments,
+        "build",
+        "--config",
+        configPath,
+        "--output",
+        smithyOutput,
+      ],
+      {
+        cwd: root,
+        env: {
+          ...process.env,
+          SMITHY_MAVEN_CACHE: mavenCache,
+          SMITHY_VITE_TANSTACK_FRAMEWORK: tanstackFramework,
+        },
+        maxBuffer: 10 * 1024 * 1024,
       },
-      maxBuffer: 10 * 1024 * 1024
-    });
+    );
   } catch (error) {
     const details = [error.stdout, error.stderr].filter(Boolean).join("\n");
-    throw new Error(`Smithy generation failed${details ? `:\n${details}` : ""}`, { cause: error });
+    throw new Error(
+      `Smithy generation failed${details ? `:\n${details}` : ""}`,
+      { cause: error },
+    );
   }
 
   await mkdir(dirname(output), { recursive: true });
@@ -134,6 +162,8 @@ export async function generate(options) {
 
   return {
     output,
-    generatedPackageJson: JSON.parse(await readFile(join(output, "package.json"), "utf8"))
+    generatedPackageJson: JSON.parse(
+      await readFile(join(output, "package.json"), "utf8"),
+    ),
   };
 }

@@ -7,7 +7,9 @@ export function smithyVite(options) {
   let running = Promise.resolve();
 
   const regenerate = () => {
-    running = running.catch(() => undefined).then(() => generate({ root, ...options }));
+    running = running
+      .catch(() => undefined)
+      .then(() => generate({ root, ...options }));
     return running;
   };
 
@@ -19,7 +21,10 @@ export function smithyVite(options) {
       generatedSource = resolve(root, options.output, "src");
     },
     resolveId(source, importer) {
-      if (source === "./runtimeConfig" && importer?.startsWith(generatedSource)) {
+      if (
+        source === "./runtimeConfig" &&
+        importer?.startsWith(generatedSource)
+      ) {
         return resolve(generatedSource, "runtimeConfig.browser.ts");
       }
     },
@@ -27,18 +32,27 @@ export function smithyVite(options) {
       await regenerate();
     },
     configureServer(server) {
-      const sourceRoots = options.sources.map(source => resolve(root, source));
+      const sourceRoots = options.sources.map((source) =>
+        resolve(root, source),
+      );
       server.watcher.add(sourceRoots);
       server.watcher.on("all", async (_event, path) => {
         if (!path.endsWith(".smithy") && !path.endsWith(".json")) return;
-        if (!sourceRoots.some(source => path === source || path.startsWith(`${source}${sep}`))) return;
+        if (
+          !sourceRoots.some(
+            (source) => path === source || path.startsWith(`${source}${sep}`),
+          )
+        )
+          return;
         try {
           await regenerate();
           server.ws.send({ type: "full-reload" });
         } catch (error) {
-          server.config.logger.error(error instanceof Error ? error.message : String(error));
+          server.config.logger.error(
+            error instanceof Error ? error.message : String(error),
+          );
         }
       });
-    }
+    },
   };
 }

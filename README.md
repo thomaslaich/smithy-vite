@@ -37,7 +37,7 @@ use aws.protocols#restJson1
 @restJson1
 service Weather {
     version: "2026-08-22"
-    operations: [GetCity]
+    operations: [GetCity, UpdateCity]
 }
 
 @readonly
@@ -47,6 +47,27 @@ operation GetCity {
         @required
         @httpLabel
         cityId: String
+    }
+
+    output := {
+        @required
+        name: String
+
+        @required
+        temperatureCelsius: Float
+    }
+}
+
+@idempotent
+@http(method: "PUT", uri: "/cities/{cityId}", code: 200)
+operation UpdateCity {
+    input := {
+        @required
+        @httpLabel
+        cityId: String
+
+        @required
+        temperatureCelsius: Float
     }
 
     output := {
@@ -86,10 +107,7 @@ Create the Smithy client once and provide it alongside TanStack Query:
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
-import {
-  WeatherClient,
-  WeatherClientProvider,
-} from "./generated/weather/src";
+import { WeatherClient, WeatherClientProvider } from "./generated/weather/src";
 
 const queryClient = new QueryClient();
 const weatherClient = new WeatherClient({ endpoint: window.location.origin });
@@ -117,6 +135,46 @@ export function App() {
   return <p>{city.data.name}</p>;
 }
 ```
+
+Operations without `@readonly` get mutation helpers. This includes operations
+marked `@idempotent`: idempotency makes repeating an operation safe, but does
+not make a state-changing operation a query.
+
+```tsx
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getCityQueryKey,
+  useUpdateCityMutation,
+} from "./generated/weather/src";
+
+export function UpdateCityButton() {
+  const queryClient = useQueryClient();
+  const updateCity = useUpdateCityMutation({
+    onSuccess: (updatedCity, input) => {
+      queryClient.setQueryData(
+        getCityQueryKey({ cityId: input.cityId }),
+        updatedCity,
+      );
+    },
+  });
+
+  return (
+    <button
+      disabled={updateCity.isPending}
+      onClick={() =>
+        updateCity.mutate({ cityId: "zrh", temperatureCelsius: 22.5 })
+      }
+    >
+      Save
+    </button>
+  );
+}
+```
+
+`smithy-vite` generates mutation keys and option factories as well as named
+helpers, so mutations can also be configured outside components. Cache updates
+and invalidation remain explicit because a Smithy operation does not generally
+identify every cached query affected by its side effects.
 
 Run `vite` as usual. The client is generated before the development server or
 production build starts, and changes to the model trigger regeneration and a
@@ -161,6 +219,13 @@ Or run the Solid example with:
 npm run dev:solid
 ```
 
+The Vue and Angular examples are available in the same way:
+
+```sh
+npm run dev:vue
+npm run dev:angular
+```
+
 Edit the active example's `model/weather.smithy` while Vite is running to
 trigger regeneration and a page reload.
 
@@ -176,8 +241,8 @@ npm run smoke
 ## Framework adapters
 
 React is the default adapter and emits imports from `react` and
-`@tanstack/react-query`. Preact and Solid projects select their native adapter
-in the Vite configuration:
+`@tanstack/react-query`. Other projects select their native adapter in the Vite
+configuration:
 
 ```ts
 smithyVite({
@@ -187,17 +252,19 @@ smithyVite({
   tanstackQuery: {
     framework: "preact",
   },
-})
+});
 ```
 
-| Framework | TanStack dependency | Configuration | Example |
-| --- | --- | --- | --- |
-| React | `@tanstack/react-query` | Default, or `framework: "react"` | `examples/vite-react` |
-| Preact | `@tanstack/preact-query` | `framework: "preact"` | `examples/vite-preact` |
-| Solid | `@tanstack/solid-query` | `framework: "solid"` | `examples/vite-solid` |
+| Framework | TanStack dependency                    | Configuration                    | Example                 |
+| --------- | -------------------------------------- | -------------------------------- | ----------------------- |
+| React     | `@tanstack/react-query`                | Default, or `framework: "react"` | `examples/vite-react`   |
+| Preact    | `@tanstack/preact-query`               | `framework: "preact"`            | `examples/vite-preact`  |
+| Solid     | `@tanstack/solid-query`                | `framework: "solid"`             | `examples/vite-solid`   |
+| Vue       | `@tanstack/vue-query`                  | `framework: "vue"`               | `examples/vite-vue`     |
+| Angular   | `@tanstack/angular-query-experimental` | `framework: "angular"`           | `examples/vite-angular` |
 
 Each adapter generates service-specific providers, bound API facades, named
-query helpers, query-option factories, and query keys. No framework-specific
+query and mutation helpers, option factories, and cache keys. No framework-specific
 `@smithy-vite/*` runtime package is required: generated code depends directly
 on the selected framework and its native TanStack Query package. The
 context-free option factories remain usable in loaders, SSR, prefetching, and
@@ -208,6 +275,17 @@ when the input depends on a signal, for example
 `useGetCityQuery(() => ({ cityId: cityId() }))`, and keep the returned query
 store intact so Solid can track property access.
 
+Vue helpers accept a plain input, ref, computed ref, or getter and retain that
+input's reactivity. Install the generated service plugin next to
+`VueQueryPlugin` with `app.use(provideWeatherClient(weatherClient))`.
+
+Angular generates DI-native providers and `inject...` helpers rather than
+hooks. Add `provideWeatherClient(weatherClient)` next to
+`provideTanStackQuery(queryClient)`, then call helpers such as
+`injectGetCityQuery` and `injectUpdateCityMutation` in an injection context.
+TanStack Angular Query is currently published as an experimental package, so
+applications should pin its patch version deliberately.
+
 ## Architecture
 
 - `@smithy-vite/codegen` selects a platform-specific optional npm package,
@@ -215,9 +293,9 @@ store intact so Solid can track property access.
   from Node.
 - The Smithy CLI resolves pinned `smithy-typescript` artifacts from Maven
   Central and loads the small integration JAR vendored with the npm package.
-- The integration emits framework-native TanStack Query keys, query-options
-  factories, a typed service-client provider and facade, and named hooks using
-  Smithy's model and generated symbols.
+- The integration emits framework-native TanStack query and mutation keys,
+  option factories, a typed service-client provider and facade, and named
+  helpers using Smithy's model and generated symbols.
 - `@smithy-vite/plugin` runs generation for development and production builds,
   watches model sources, and selects the browser runtime configuration from the
   upstream generated client.

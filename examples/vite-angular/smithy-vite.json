@@ -1,0 +1,9 @@
+{
+  "sources": ["model"],
+  "service": "example.weather#Weather",
+  "output": "src/generated/weather",
+  "packageName": "@smithy-vite/example-angular-weather-client",
+  "tanstackQuery": {
+    "framework": "angular"
+  }
+}

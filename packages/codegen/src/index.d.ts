@@ -5,7 +5,7 @@ export interface GenerateOptions {
   output: string;
   packageName?: string;
   tanstackQuery?: {
-    framework?: "react" | "preact" | "solid";
+    framework?: "react" | "preact" | "solid" | "vue" | "angular";
   };
 }
 

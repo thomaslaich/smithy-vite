@@ -18,7 +18,13 @@ export default defineConfig({
       name: "weather-service-mock",
       configureServer(server) {
         server.middlewares.use((request, response, next) => {
-          if (request.method !== "GET" || request.url !== "/cities/zrh") {
+          if (request.url !== "/cities/zrh") {
+            next();
+            return;
+          }
+
+          const temperatureCelsius = request.method === "PUT" ? 22.5 : 21.5;
+          if (request.method !== "GET" && request.method !== "PUT") {
             next();
             return;
           }
@@ -27,7 +33,7 @@ export default defineConfig({
           response.end(
             JSON.stringify({
               name: "Zurich",
-              temperatureCelsius: 21.5,
+              temperatureCelsius,
               humidityPercent: 58,
               windSpeedKph: 7.2,
             }),
