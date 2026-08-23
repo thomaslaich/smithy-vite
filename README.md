@@ -1,13 +1,128 @@
-# Smithy Vite
+# smithy-vite
 
-An npm-native experiment for generating browser clients directly from Smithy
-models with `smithy-typescript` and Vite, with optional framework adapters such
-as TanStack React Query.
+`smithy-vite` generates type-safe browser clients and framework-native TanStack Query bindings from Smithy models as part of your Vite build.
 
-This repository currently contains the Milestone 1 feasibility spike. The API
-is intentionally not ready for publication.
+## Why?
 
-## Run the spike
+The official [`smithy-typescript` documentation](https://github.com/smithy-lang/smithy-typescript#using-smithy-typescript-with-gradle)
+describes a Gradle workflow for generating TypeScript clients. That is a natural
+fit for the Smithy and JVM ecosystem, but frontend developers generally do not
+want to introduce and maintain a second build system just to generate their
+client. They already have one: Vite.
+
+`smithy-vite` makes client generation part of that existing workflow. Running
+Vite generates the client, watches the model, and exposes errors where frontend
+developers already expect them, while still using the official
+`smithy-typescript` generator underneath.
+
+## Getting started
+
+Install the Vite plugin, the generated client's Smithy runtime dependencies,
+and the TanStack adapter for your framework. For React:
+
+```sh
+npm install --save-dev @smithy-vite/plugin
+npm install @aws-sdk/core @smithy/core @smithy/fetch-http-handler @smithy/node-http-handler @smithy/types @tanstack/react-query react react-dom tslib
+```
+
+Create a model at `model/weather.smithy`:
+
+```smithy
+$version: "2"
+
+namespace example.weather
+
+use aws.protocols#restJson1
+
+@restJson1
+service Weather {
+    version: "2026-08-22"
+    operations: [GetCity]
+}
+
+@readonly
+@http(method: "GET", uri: "/cities/{cityId}", code: 200)
+operation GetCity {
+    input := {
+        @required
+        @httpLabel
+        cityId: String
+    }
+
+    output := {
+        @required
+        name: String
+
+        @required
+        temperatureCelsius: Float
+    }
+}
+```
+
+Add `smithyVite` before the React plugin in `vite.config.ts`:
+
+```ts
+import react from "@vitejs/plugin-react";
+import { smithyVite } from "@smithy-vite/plugin";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [
+    smithyVite({
+      sources: ["model"],
+      service: "example.weather#Weather",
+      output: "src/generated/weather",
+      packageName: "@example/weather-client",
+    }),
+    react(),
+  ],
+});
+```
+
+Create the Smithy client once and provide it alongside TanStack Query:
+
+```tsx
+// src/main.tsx
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createRoot } from "react-dom/client";
+import { App } from "./App";
+import {
+  WeatherClient,
+  WeatherClientProvider,
+} from "./generated/weather/src";
+
+const queryClient = new QueryClient();
+const weatherClient = new WeatherClient({ endpoint: window.location.origin });
+
+createRoot(document.getElementById("root")!).render(
+  <QueryClientProvider client={queryClient}>
+    <WeatherClientProvider client={weatherClient}>
+      <App />
+    </WeatherClientProvider>
+  </QueryClientProvider>,
+);
+```
+
+Readonly Smithy operations get named, type-safe query helpers:
+
+```tsx
+// src/App.tsx
+import { useGetCityQuery } from "./generated/weather/src";
+
+export function App() {
+  const city = useGetCityQuery({ cityId: "zrh" });
+
+  if (city.isPending) return <p>Loading…</p>;
+  if (city.isError) return <p>{city.error.message}</p>;
+  return <p>{city.data.name}</p>;
+}
+```
+
+Run `vite` as usual. The client is generated before the development server or
+production build starts, and changes to the model trigger regeneration and a
+full reload.
+
+## Develop this repository
 
 Requirements for working from a source checkout are Node.js 20.19 or newer,
 JDK 17, and Gradle. [devenv](https://devenv.sh/getting-started/) provides the
@@ -22,8 +137,7 @@ to activate that environment when entering the repository. Using devenv is not
 required; the standard npm workflow continues to work with locally installed
 tools.
 
-While working from this source checkout before the platform packages are
-published, prepare the package for the current machine once:
+Prepare the package for the current machine once:
 
 ```sh
 npm install
@@ -32,12 +146,23 @@ npm run build:integration
 npm run dev
 ```
 
-Open <http://localhost:5173>. Vite generates the client before starting, and
-the example calls a small development-only weather-service mock through the
-generated `WeatherClient` and generated `getCityQueryOptions` factory.
+Open <http://localhost:5173>. Vite generates the React client before starting,
+and the example calls a small development-only weather-service mock through the
+generated `WeatherClientProvider` and `useGetCityQuery` hook. Run the equivalent
+Preact example with:
 
-Edit `examples/vite-react/model/weather.smithy` while Vite is running to trigger
-regeneration and a page reload.
+```sh
+npm run dev:preact
+```
+
+Or run the Solid example with:
+
+```sh
+npm run dev:solid
+```
+
+Edit the active example's `model/weather.smithy` while Vite is running to
+trigger regeneration and a page reload.
 
 Other useful commands:
 
@@ -48,14 +173,50 @@ npm run build
 npm run smoke
 ```
 
-## Spike architecture
+## Framework adapters
+
+React is the default adapter and emits imports from `react` and
+`@tanstack/react-query`. Preact and Solid projects select their native adapter
+in the Vite configuration:
+
+```ts
+smithyVite({
+  sources: ["model"],
+  service: "example.weather#Weather",
+  output: "src/generated/weather",
+  tanstackQuery: {
+    framework: "preact",
+  },
+})
+```
+
+| Framework | TanStack dependency | Configuration | Example |
+| --- | --- | --- | --- |
+| React | `@tanstack/react-query` | Default, or `framework: "react"` | `examples/vite-react` |
+| Preact | `@tanstack/preact-query` | `framework: "preact"` | `examples/vite-preact` |
+| Solid | `@tanstack/solid-query` | `framework: "solid"` | `examples/vite-solid` |
+
+Each adapter generates service-specific providers, bound API facades, named
+query helpers, query-option factories, and query keys. No framework-specific
+`@smithy-vite/*` runtime package is required: generated code depends directly
+on the selected framework and its native TanStack Query package. The
+context-free option factories remain usable in loaders, SSR, prefetching, and
+tests.
+
+Solid query helpers accept either a plain input or an accessor. Use an accessor
+when the input depends on a signal, for example
+`useGetCityQuery(() => ({ cityId: cityId() }))`, and keep the returned query
+store intact so Solid can track property access.
+
+## Architecture
 
 - `@smithy-vite/codegen` selects a platform-specific optional npm package,
   writes an ephemeral `smithy-build.json`, and invokes its bundled Smithy CLI
   from Node.
 - The Smithy CLI resolves pinned `smithy-typescript` artifacts from Maven
   Central and loads the small integration JAR vendored with the npm package.
-- The integration emits TanStack Query keys and query-options factories using
+- The integration emits framework-native TanStack Query keys, query-options
+  factories, a typed service-client provider and facade, and named hooks using
   Smithy's model and generated symbols.
 - `@smithy-vite/plugin` runs generation for development and production builds,
   watches model sources, and selects the browser runtime configuration from the

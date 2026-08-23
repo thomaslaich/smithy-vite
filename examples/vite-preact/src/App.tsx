@@ -5,7 +5,7 @@ export function App() {
 
   return (
     <main>
-      <h1>smithy-vite</h1>
+      <h1>smithy-vite + Preact</h1>
       <pre>{JSON.stringify(city.data ?? { status: city.status }, null, 2)}</pre>
     </main>
   );

@@ -1,6 +1,5 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
+import { render } from "solid-js/web";
 import { App } from "./App";
 import {
   WeatherClient,
@@ -10,12 +9,13 @@ import {
 const queryClient = new QueryClient();
 const weatherClient = new WeatherClient({ endpoint: window.location.origin });
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+render(
+  () => (
     <QueryClientProvider client={queryClient}>
       <WeatherClientProvider client={weatherClient}>
         <App />
       </WeatherClientProvider>
     </QueryClientProvider>
-  </StrictMode>,
+  ),
+  document.getElementById("app")!,
 );

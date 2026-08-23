@@ -52,10 +52,28 @@ export async function generate(options) {
   const output = resolve(root, options.output);
   const work = resolve(root, ".smithy-vite");
   const smithyOutput = join(work, "smithy-output");
+  const mavenCache = join(work, "maven-cache");
+  const cachedIntegration = join(
+    mavenCache,
+    "io",
+    "github",
+    "thomaslaich",
+    "smithyvite",
+    "smithy-vite-codegen",
+  );
   const generated = join(smithyOutput, "source", "typescript-client-codegen");
   const staged = `${output}.next`;
   const localMaven = resolve(packageRoot, "vendor", "maven");
   const smithy = await resolveSmithyCli();
+  const tanstackFramework = options.tanstackQuery?.framework ?? "react";
+
+  if (
+    tanstackFramework !== "react"
+    && tanstackFramework !== "preact"
+    && tanstackFramework !== "solid"
+  ) {
+    throw new Error(`Unsupported TanStack Query framework: ${tanstackFramework}`);
+  }
 
   const config = {
     version: "1.0",
@@ -81,6 +99,7 @@ export async function generate(options) {
   };
 
   await rm(smithyOutput, { recursive: true, force: true });
+  await rm(cachedIntegration, { recursive: true, force: true });
   await rm(staged, { recursive: true, force: true });
   await mkdir(work, { recursive: true });
   const configPath = join(work, "smithy-build.json");
@@ -96,6 +115,11 @@ export async function generate(options) {
       smithyOutput
     ], {
       cwd: root,
+      env: {
+        ...process.env,
+        SMITHY_MAVEN_CACHE: mavenCache,
+        SMITHY_VITE_TANSTACK_FRAMEWORK: tanstackFramework,
+      },
       maxBuffer: 10 * 1024 * 1024
     });
   } catch (error) {

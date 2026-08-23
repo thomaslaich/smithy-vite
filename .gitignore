@@ -4,7 +4,7 @@ node_modules/
 dist/
 build/
 .DS_Store
-examples/vite-react/src/generated/
+examples/*/src/generated/
 packages/smithy-cli-*/vendor/
 
 # Local editor and language-server state

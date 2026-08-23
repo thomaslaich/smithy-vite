@@ -1,15 +1,15 @@
-# Smithy Vite plan
+# smithy-vite plan
 
 ## Product direction
 
-Smithy Vite should provide an npm-native, framework-neutral Vite development
-experience for Smithy services. The first example and query adapter target
-React, while the code generation core and Vite lifecycle remain independent of
-the UI framework.
+`smithy-vite` should provide an npm-native, framework-neutral Vite development
+experience for Smithy services. The verified query adapters target React,
+Preact, and Solid, while the code generation core and Vite lifecycle remain
+independent of the UI framework.
 
 The generator must use `smithy-typescript` directly. It must not project Smithy
-to OpenAPI or implement a second HTTP client. Optional framework adapters, the
-first of which targets TanStack React Query, wrap the generated Smithy client.
+to OpenAPI or implement a second HTTP client. Optional framework adapters wrap
+the generated Smithy client using the framework's native TanStack Query package.
 
 The intended user experience is:
 
@@ -29,7 +29,7 @@ export default defineConfig({
       sources: ["./model"],
       service: "example.weather#Weather",
       tanstackQuery: {
-        hooks: false,
+        framework: "react",
       },
     }),
   ],
@@ -45,8 +45,9 @@ build, or manual Maven configuration.
 
 - The GitHub repository is named `smithy-vite`.
 - The product is Vite-focused and UI-framework-neutral.
-- React Query is the first optional TanStack adapter; Svelte Query and Solid
-  Query are compatible future directions rather than second-class use cases.
+- React Query, Preact Query, and Solid Query are the first TanStack adapters;
+  Svelte Query is a compatible future direction rather than a second-class use
+  case.
 - A shared code generation core supports both build-tool integrations and a
   standalone CI command.
 - `smithy-typescript` owns client types, commands, protocols, serialization,
@@ -74,8 +75,9 @@ smithy-vite/
 ├── codegen/
 │   └── smithy-vite-codegen/  # JVM smithy-typescript integration
 ├── examples/
-│   ├── vite-client/
-│   └── vite-tanstack-query/
+│   ├── vite-react/
+│   ├── vite-preact/
+│   └── vite-solid/
 └── website/
 ```
 
@@ -85,7 +87,7 @@ smithy-vite/
 - Smithy CLI acquisition and invocation.
 - Pinned Smithy and `smithy-typescript` versions.
 - Generation configuration, caching, diagnostics, and output management.
-- Optional TanStack React Query generation.
+- Framework-native TanStack React Query, Preact Query, and Solid Query generation.
 
 `@smithy-vite/plugin` contains:
 
@@ -96,21 +98,23 @@ smithy-vite/
 
 The Vite package depends on the codegen package, so ordinary Vite users only
 need to install `@smithy-vite/plugin`. TanStack generation initially remains a
-codegen option rather than a separate npm package because the generator only
-emits imports from the consumer's `@tanstack/react-query` dependency.
+codegen option rather than a separate npm package because the generator emits
+imports from the consumer's framework-specific TanStack Query dependency.
 
 Possible future packages are:
 
 ```text
 @smithy-vite/react-query
+@smithy-vite/preact-query
 @smithy-vite/svelte-query
 @smithy-vite/solid-query
 @smithy-vite/nx
 ```
 
-React Query generation remains a codegen option during the spike. Framework
-adapters should become separate packages once their common extension contract
-is understood.
+React Query, Preact Query, and Solid Query generation remain codegen options
+during the spike.
+Framework adapters should become separate packages only once their common
+runtime or extension contract is understood.
 
 ## Architecture
 
@@ -376,7 +380,7 @@ package build, or manual Maven setup.
 
 - Next.js integration and React Server Component behavior.
 - Nx task inference and caching integration.
-- Framework adapters beyond the initial React Query integration.
+- Framework adapters beyond the verified React, Preact, and Solid Query integrations.
 - Automatic mutation invalidation.
 - Optimistic-update generation.
 - A general plugin marketplace.
@@ -394,6 +398,6 @@ Next.js, Nx, or another TanStack framework.
   is the closest OpenAPI-based developer-experience benchmark.
 - [`@aws/nx-plugin`](https://awslabs.github.io/nx-plugin-for-aws/en/guides/connection/react-smithy/)
   demonstrates Nx-orchestrated Smithy-to-OpenAPI client and TanStack generation.
-  Its orchestration and generated API are useful references, but Smithy Vite
+  Its orchestration and generated API are useful references, but `smithy-vite`
   should use `smithy-typescript` directly and should not require Nx or an OpenAPI
   projection.

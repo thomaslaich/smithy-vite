@@ -4,6 +4,9 @@ export interface GenerateOptions {
   service: string;
   output: string;
   packageName?: string;
+  tanstackQuery?: {
+    framework?: "react" | "preact" | "solid";
+  };
 }
 
 export interface GenerateResult {

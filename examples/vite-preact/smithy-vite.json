@@ -1,0 +1,9 @@
+{
+  "sources": ["model"],
+  "service": "example.weather#Weather",
+  "output": "src/generated/weather",
+  "packageName": "@smithy-vite/example-preact-weather-client",
+  "tanstackQuery": {
+    "framework": "preact"
+  }
+}
