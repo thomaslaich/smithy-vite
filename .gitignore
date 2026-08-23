@@ -6,3 +6,19 @@ build/
 .DS_Store
 examples/vite-react/src/generated/
 packages/smithy-cli-*/vendor/
+
+# Local editor and language-server state
+.metals/
+.bloop/
+.bsp/
+.vscode/
+metals.sbt
+
+# IDE compiler output
+/codegen/bin/
+
+# Devenv and direnv local state
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+.direnv/

@@ -9,13 +9,26 @@ is intentionally not ready for publication.
 
 ## Run the spike
 
-Requirements: Node.js 20.19 or newer. The example does not require a system JDK
-or Gradle. While working from this source checkout before the platform packages
-are published, prepare the package for the current machine once:
+Requirements for working from a source checkout are Node.js 20.19 or newer,
+JDK 17, and Gradle. [devenv](https://devenv.sh/getting-started/) provides the
+pinned Node.js 22, JDK 17, and Gradle toolchain:
+
+```sh
+devenv shell
+```
+
+With [direnv](https://direnv.net/) installed, run `direnv allow` once instead
+to activate that environment when entering the repository. Using devenv is not
+required; the standard npm workflow continues to work with locally installed
+tools.
+
+While working from this source checkout before the platform packages are
+published, prepare the package for the current machine once:
 
 ```sh
 npm install
 npm run prepare:cli
+npm run build:integration
 npm run dev
 ```
 
@@ -48,11 +61,17 @@ npm run smoke
   watches model sources, and selects the browser runtime configuration from the
   upstream generated client.
 
-Gradle is only needed by maintainers after changing the Java integration:
+The integration JAR and its local Maven repository are generated build outputs,
+not committed files. Build them before running from source or packing the
+`@smithy-vite/codegen` npm package:
 
 ```sh
 npm run build:integration
 ```
+
+The command uses the Gradle and JDK supplied by devenv, or compatible tools on
+`PATH`. Published npm packages include the generated integration JAR, so package
+consumers do not need Gradle or a JDK.
 
 The platform packages are prepared for publishing from checksum-verified
 official Smithy archives. Prepare every supported package with:

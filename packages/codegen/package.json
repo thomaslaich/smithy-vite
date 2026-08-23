@@ -12,7 +12,11 @@
   "bin": {
     "smithy-vite": "./src/cli.js"
   },
+  "scripts": {
+    "prepack": "node scripts/validate-vendor.mjs"
+  },
   "files": [
+    "scripts",
     "src",
     "vendor"
   ],

@@ -1,0 +1,2 @@
+# Keep this file so npm does not reuse the sibling .gitignore as its packlist.
+# The generated Maven repository is deliberately included in the npm package.
