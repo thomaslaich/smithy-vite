@@ -2,28 +2,28 @@ import { createHash } from "node:crypto";
 import { chmod, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import { unzipSync } from "fflate";
+import { smithyCliVersion } from "../packages/codegen/src/versions.js";
 
-const smithyVersion = "1.73.0";
 const distributions = {
   "darwin-arm64": {
     asset: "darwin-aarch64",
-    digest: "daf789553a20822138bc90b913233374613e1a4515a61358241d5c5489be0be9",
+    digest: "cbeb49c53df026083f2ba0e4ea077828602b5fcd0a3d668f3f90c43354694afc",
   },
   "darwin-x64": {
     asset: "darwin-x86_64",
-    digest: "eb6f7e72245ecf0e3df992314c80dde080e4215716214874a0c3b94f9813562f",
+    digest: "41e6ee64e05399824fc0b6b4fb2b63f94c20f55848f5901e98d56f5230532f44",
   },
   "linux-arm64": {
     asset: "linux-aarch64",
-    digest: "f69295411846274b9e8128f31ffa1d7ad02fa078047e2c4e46d5d85bcba4fc20",
+    digest: "5d067d80b9a881b444c64b5a63059be226360cdee4c7b392616854495fe03dfb",
   },
   "linux-x64": {
     asset: "linux-x86_64",
-    digest: "9071a7db052da81ab6f4be1b4d43ea152b44b78217be0dd21d37d9ea5ec1942d",
+    digest: "05ca13293eb949abfa3a38cefb053b0f91ad9e15b39c9e996258227b866644c1",
   },
   "win32-x64": {
     asset: "windows-x64",
-    digest: "32e00abc06f6d1ac9201d8f574bd7a2d62d65eaeb2ea16b3877be18d8febafc2",
+    digest: "d7285a415c2271706becb6c8e62e645746b1802733a471a7c308a463bdc564d2",
   },
 };
 
@@ -41,7 +41,7 @@ for (const platform of platforms) {
     throw new Error(`Unsupported Smithy CLI package platform: ${platform}`);
 
   const archiveName = `smithy-cli-${distribution.asset}.zip`;
-  const url = `https://github.com/smithy-lang/smithy/releases/download/${smithyVersion}/${archiveName}`;
+  const url = `https://github.com/smithy-lang/smithy/releases/download/${smithyCliVersion}/${archiveName}`;
   console.log(`Downloading ${archiveName}`);
   const response = await fetch(url);
   if (!response.ok)
@@ -85,6 +85,6 @@ for (const platform of platforms) {
   }
 
   console.log(
-    `Prepared @smithy-vite/smithy-cli-${platform} with Smithy CLI ${smithyVersion}`,
+    `Prepared @smithy-vite/smithy-cli-${platform} with Smithy CLI ${smithyCliVersion}`,
   );
 }

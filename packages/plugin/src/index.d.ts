@@ -1,4 +1,6 @@
 import type { Plugin } from "vite";
-import type { GenerateOptions } from "@smithy-vite/codegen";
+import type { ClientGenerateOptions } from "@smithy-vite/codegen";
 
-export function smithyVite(options: Omit<GenerateOptions, "root">): Plugin;
+export function smithyVite(
+  options: Omit<ClientGenerateOptions, "root">,
+): Plugin;

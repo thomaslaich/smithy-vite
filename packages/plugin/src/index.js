@@ -2,6 +2,10 @@ import { sep, resolve } from "node:path";
 import { generate } from "@smithy-vite/codegen";
 
 export function smithyVite(options) {
+  if (options.mode && options.mode !== "client") {
+    throw new Error("The Vite plugin only supports client generation.");
+  }
+
   let root = process.cwd();
   let generatedSource = resolve(root, options.output, "src");
   let running = Promise.resolve();
@@ -9,7 +13,13 @@ export function smithyVite(options) {
   const regenerate = () => {
     running = running
       .catch(() => undefined)
-      .then(() => generate({ root, ...options }));
+      .then(() =>
+        generate({
+          root,
+          ...options,
+          tanstackQuery: options.tanstackQuery ?? { framework: "react" },
+        }),
+      );
     return running;
   };
 

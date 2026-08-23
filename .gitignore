@@ -3,6 +3,7 @@ node_modules/
 .smithy-vite/
 dist/
 build/
+artifacts/
 .DS_Store
 examples/*/src/generated/
 packages/smithy-cli-*/vendor/

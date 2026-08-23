@@ -1,7 +1,7 @@
 {
   "name": "@smithy-vite/codegen",
   "version": "0.0.1-spike",
-  "private": true,
+  "description": "Hermetic npm-native Smithy TypeScript code generation",
   "type": "module",
   "exports": {
     ".": {
@@ -29,5 +29,14 @@
   },
   "engines": {
     "node": ">=20.19"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thomaslaich/smithy-vite.git",
+    "directory": "packages/codegen"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "Apache-2.0"
 }

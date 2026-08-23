@@ -244,7 +244,7 @@ public final class TanStackQueryIntegration implements TypeScriptIntegration {
     ANGULAR;
 
     private static Framework fromEnvironment() {
-      String value = System.getenv().getOrDefault("SMITHY_VITE_TANSTACK_FRAMEWORK", "react");
+      String value = System.getenv().getOrDefault("SMITHY_VITE_TANSTACK_FRAMEWORK", "none");
       return switch (value) {
         case "react" -> REACT;
         case "preact" -> PREACT;
@@ -259,7 +259,9 @@ public final class TanStackQueryIntegration implements TypeScriptIntegration {
 
   @Override
   public boolean matchesSettings(TypeScriptSettings settings) {
-    return settings.generateClient() && settings.getOptionalService().isPresent();
+    return settings.generateClient()
+        && settings.getOptionalService().isPresent()
+        && !System.getenv().getOrDefault("SMITHY_VITE_TANSTACK_FRAMEWORK", "none").equals("none");
   }
 
   @Override

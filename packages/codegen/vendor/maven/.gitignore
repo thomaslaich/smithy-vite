@@ -1,4 +1,4 @@
-# Bundled Maven repo — run `npm run build:integration` to populate.
+# Bundled Maven repo — run `npm run build:integration`, then `npm run prepare:maven`.
 # Included in the npm package but not committed to git.
 *
 !.gitignore

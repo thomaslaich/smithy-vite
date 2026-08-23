@@ -1,0 +1,8 @@
+{
+  "mode": "server",
+  "sources": ["model"],
+  "service": "example.weather#Weather",
+  "output": "src/generated/weather-server",
+  "packageName": "@smithy-vite/example-full-stack-weather-server",
+  "disableDefaultValidation": true
+}

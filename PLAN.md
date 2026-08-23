@@ -2,10 +2,10 @@
 
 ## Product direction
 
-`smithy-vite` should provide an npm-native, framework-neutral Vite development
-experience for Smithy services. The verified query adapters target React,
-Preact, Solid, Vue, and Angular, while the code generation core and Vite
-lifecycle remain independent of the UI framework.
+`smithy-vite` should provide an npm-native, hermetic TypeScript generation
+experience for Smithy services. The standalone generator supports client,
+server, and types output; Vite is the first build-tool integration. The verified
+query adapters target React, Preact, Solid, Vue, and Angular.
 
 The generator must use `smithy-typescript` directly. It must not project Smithy
 to OpenAPI or implement a second HTTP client. Optional framework adapters wrap
@@ -44,12 +44,13 @@ build, or manual Maven configuration.
 ## Decisions
 
 - The GitHub repository is named `smithy-vite`.
-- The product is Vite-focused and UI-framework-neutral.
+- The product is npm-native and build-tool-neutral at its core, with a
+  first-class Vite integration for browser clients.
 - React Query, Preact Query, Solid Query, Vue Query, and experimental Angular
   Query are the first TanStack adapters; Svelte Query is a compatible future
   direction rather than a second-class use case.
-- A shared code generation core supports both build-tool integrations and a
-  standalone CI command.
+- A shared code generation core supports client, server, and types modes through
+  both its standalone CLI and build-tool integrations.
 - `smithy-typescript` owns client types, commands, protocols, serialization,
   middleware, authentication, errors, and transports.
 - Generated TanStack code wraps the `smithy-typescript` client.
@@ -58,9 +59,9 @@ build, or manual Maven configuration.
 - Named hooks are opt-in convenience wrappers over the option factories.
 - Generated output is physical source code so TypeScript, editors, tests, and
   non-Vite tools can resolve it.
-- The default published toolchain should bundle the platform CLI and the entire
+- The default published toolchain bundles the platform CLI and the entire
   pinned Maven code-generation closure so generation is network-free.
-- An explicit external-toolchain mode should delegate both CLI selection and
+- An explicit external-toolchain mode delegates both CLI selection and
   Maven resolution to the user. Hybrid modes are intentionally avoided.
 - Non-Vite build integrations such as Next.js and Nx are deferred until the
   core and generated API are stable.
@@ -83,7 +84,8 @@ smithy-vite/
 │   ├── vite-preact/
 │   ├── vite-solid/
 │   ├── vite-vue/
-│   └── vite-angular/
+│   ├── vite-angular/
+│   └── react-node/   # generated React client + generated Node server
 └── website/
 ```
 
@@ -129,7 +131,9 @@ Smithy model
     │
     ├── native Smithy CLI
     │       └── smithy-typescript
-    │               └── generated client, commands, inputs, and outputs
+    │               ├── generated client
+    │               ├── generated server handlers
+    │               └── generated shared types
     │
     └── Smithy TypeScript integration
             └── selected framework adapter
@@ -252,17 +256,20 @@ maintainer-only preparation script downloads the official archives, verifies
 their pinned checksums, and stages complete distributions—including their legal
 files—for npm publishing.
 
-- The original spike downloaded Smithy CLI 1.73.0 on demand and verified its
-  SHA-256 digest. That proved the distribution's bundled Java runtime removes
-  the system-Java requirement. The current implementation packages the same
-  verified distribution through platform-specific optional npm dependencies;
-  `SMITHY_VITE_SMITHY` remains an explicit development override.
-- `smithy-typescript` and its AWS protocol integration are resolved directly by
-  the Smithy CLI from Maven Central at pinned version 0.52.0. Consumers do not
-  need Maven or Gradle configuration.
-- The custom `TypeScriptIntegration` is built once by maintainers and included
-  in `@smithy-vite/codegen` as a tiny file-based Maven repository. Gradle is
-  not invoked during npm installation, generation, or a Vite build.
+- The packaged toolchain uses Smithy CLI 1.72.1 and verifies every platform
+  archive's SHA-256 digest. The distribution's bundled Java runtime removes the
+  system-Java requirement. Platform-specific optional npm dependencies contain
+  the same verified distribution; the explicit external-toolchain
+  configuration replaces the earlier `SMITHY_VITE_SMITHY` development
+  override.
+- `smithy-typescript`, its AWS protocol integration, their transitive Maven
+  closure, and the custom `TypeScriptIntegration` are resolved and verified
+  once by maintainers. They are included in `@smithy-vite/codegen` as a pinned
+  file-based Maven repository. Gradle, Maven, and network access are not used
+  during consumer generation or a Vite build.
+- External mode invokes a user-selected or `PATH` Smithy CLI and uses only the
+  explicitly configured Maven repositories. It never falls back to bundled
+  tools or artifacts.
 - `@smithy-vite/codegen` creates `.smithy-vite/smithy-build.json`; it is an
   implementation detail rather than a user-owned configuration file.
 - Upstream output is copied atomically to the configured physical source

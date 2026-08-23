@@ -11,11 +11,10 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
+import { defaultCodegenDependencies } from "./versions.js";
 
 const execFileAsync = promisify(execFile);
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const smithyTypescriptVersion = "0.52.0";
-const integrationVersion = "0.0.1-spike";
 const smithyCliPackages = {
   "darwin-arm64": "@smithy-vite/smithy-cli-darwin-arm64",
   "darwin-x64": "@smithy-vite/smithy-cli-darwin-x64",
@@ -24,11 +23,7 @@ const smithyCliPackages = {
   "win32-x64": "@smithy-vite/smithy-cli-win32-x64",
 };
 
-async function resolveSmithyCli() {
-  if (process.env.SMITHY_VITE_SMITHY) {
-    return { executable: process.env.SMITHY_VITE_SMITHY, arguments: [] };
-  }
-
+async function resolveBundledSmithyCli() {
   const packageName = smithyCliPackages[`${process.platform}-${process.arch}`];
   if (!packageName) {
     throw new Error(
@@ -56,8 +51,7 @@ async function resolveSmithyCli() {
       return localPackage.smithyCommand;
     } catch {
       throw new Error(
-        `The optional package ${packageName} is unavailable. Reinstall without omitting optional dependencies, ` +
-          "or set SMITHY_VITE_SMITHY to an existing Smithy CLI executable.",
+        `The optional package ${packageName} is unavailable. Reinstall without omitting optional dependencies, or select the external toolchain mode.`,
         { cause: packageError },
       );
     }
@@ -70,21 +64,69 @@ export async function generate(options) {
   const work = resolve(root, ".smithy-vite");
   const smithyOutput = join(work, "smithy-output");
   const mavenCache = join(work, "maven-cache");
-  const cachedIntegration = join(
-    mavenCache,
-    "io",
-    "github",
-    "thomaslaich",
-    "smithyvite",
-    "smithy-vite-codegen",
-  );
-  const generated = join(smithyOutput, "source", "typescript-client-codegen");
+  const generated = join(smithyOutput, "source", "typescript-codegen");
   const staged = `${output}.next`;
   const localMaven = resolve(packageRoot, "vendor", "maven");
-  const smithy = await resolveSmithyCli();
-  const tanstackFramework = options.tanstackQuery?.framework ?? "react";
+  const mode = options.mode ?? "client";
+  const toolchain = options.toolchain ?? { mode: "bundled" };
+  const toolchainMode = toolchain.mode ?? "bundled";
+  let smithy;
+  let repositories;
+  let dependencies;
+
+  if (toolchainMode === "bundled") {
+    await access(join(localMaven, "manifest.json")).catch((error) => {
+      throw new Error(
+        "The bundled Maven toolchain is unavailable. Reinstall @smithy-vite/codegen, or run `npm run build:integration` followed by `npm run prepare:maven` in a source checkout.",
+        { cause: error },
+      );
+    });
+    smithy = await resolveBundledSmithyCli();
+    repositories = [
+      { id: "smithy-vite-bundled", url: pathToFileURL(localMaven).href },
+    ];
+    dependencies = defaultCodegenDependencies(mode);
+  } else if (toolchainMode === "external") {
+    if (
+      !Array.isArray(toolchain.maven?.repositories) ||
+      toolchain.maven.repositories.length === 0
+    ) {
+      throw new Error(
+        "The external toolchain mode requires at least one explicit Maven repository.",
+      );
+    }
+    smithy = {
+      executable: toolchain.smithy ?? "smithy",
+      arguments: toolchain.smithyArguments ?? [],
+    };
+    repositories = toolchain.maven.repositories;
+    dependencies =
+      toolchain.maven?.dependencies ?? defaultCodegenDependencies(mode);
+  } else {
+    throw new Error(`Unsupported Smithy Vite toolchain mode: ${toolchainMode}`);
+  }
+  const tanstackFramework = options.tanstackQuery?.framework ?? "none";
+
+  if (mode !== "client" && mode !== "server" && mode !== "types") {
+    throw new Error(`Unsupported TypeScript codegen mode: ${mode}`);
+  }
+
+  if (mode === "types" && !options.closure) {
+    throw new Error("TypeScript types mode requires a shape closure.");
+  }
+
+  if (mode !== "types" && !options.service) {
+    throw new Error(`TypeScript ${mode} mode requires a service.`);
+  }
+
+  if (mode !== "client" && options.tanstackQuery) {
+    throw new Error(
+      "TanStack Query adapters can only be generated in client mode.",
+    );
+  }
 
   if (
+    tanstackFramework !== "none" &&
     tanstackFramework !== "react" &&
     tanstackFramework !== "preact" &&
     tanstackFramework !== "solid" &&
@@ -100,27 +142,28 @@ export async function generate(options) {
     version: "1.0",
     sources: options.sources.map((source) => resolve(root, source)),
     maven: {
-      repositories: [
-        { id: "smithy-vite", url: pathToFileURL(localMaven).href },
-        { id: "central", url: "https://repo.maven.apache.org/maven2" },
-      ],
-      dependencies: [
-        `software.amazon.smithy.typescript:smithy-aws-typescript-codegen:${smithyTypescriptVersion}`,
-        `io.github.thomaslaich.smithyvite:smithy-vite-codegen:${integrationVersion}`,
-      ],
+      repositories,
+      dependencies,
     },
     plugins: {
-      "typescript-client-codegen": {
-        service: options.service,
-        package: options.packageName ?? "@smithy-vite/generated-client",
+      "typescript-codegen": {
+        package:
+          options.packageName ??
+          `@smithy-vite/generated-${mode === "types" ? "types" : mode}`,
         packageVersion: "0.0.0",
         private: true,
+        modes: [mode],
+        ...(mode === "types"
+          ? { closure: options.closure }
+          : { service: options.service }),
+        ...(mode === "server" && options.disableDefaultValidation !== undefined
+          ? { disableDefaultValidation: options.disableDefaultValidation }
+          : {}),
       },
     },
   };
 
   await rm(smithyOutput, { recursive: true, force: true });
-  await rm(cachedIntegration, { recursive: true, force: true });
   await rm(staged, { recursive: true, force: true });
   await mkdir(work, { recursive: true });
   const configPath = join(work, "smithy-build.json");

@@ -1,7 +1,7 @@
 {
   "name": "@smithy-vite/plugin",
   "version": "0.0.1-spike",
-  "private": true,
+  "description": "Generate Smithy TypeScript clients as part of a Vite build",
   "type": "module",
   "exports": {
     ".": {
@@ -14,5 +14,14 @@
   },
   "peerDependencies": {
     "vite": ">=7 <9"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thomaslaich/smithy-vite.git",
+    "directory": "packages/plugin"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "Apache-2.0"
 }

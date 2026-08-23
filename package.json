@@ -8,37 +8,51 @@
     "examples/*"
   ],
   "scripts": {
-    "build:integration": "gradle -p codegen publish",
+    "build:integration": "gradle -p codegen publishMavenPublicationToSpikeRepository",
     "prepare:cli": "node scripts/prepare-smithy-cli-packages.mjs",
-    "generate": "npm run generate:react && npm run generate:preact && npm run generate:solid && npm run generate:vue && npm run generate:angular",
+    "prepare:maven": "node scripts/prepare-maven-repository.mjs",
+    "check:toolchains": "node scripts/check-toolchain-modes.mjs",
+    "check:packages": "node scripts/check-packages.mjs",
+    "generate": "npm run generate:react && npm run generate:preact && npm run generate:solid && npm run generate:vue && npm run generate:angular && npm run generate:react-node",
     "generate:react": "npm run generate --workspace @smithy-vite/example-vite",
     "generate:preact": "npm run generate --workspace @smithy-vite/example-vite-preact",
     "generate:solid": "npm run generate --workspace @smithy-vite/example-vite-solid",
     "generate:vue": "npm run generate --workspace @smithy-vite/example-vite-vue",
     "generate:angular": "npm run generate --workspace @smithy-vite/example-vite-angular",
+    "generate:react-node": "npm run generate --workspace @smithy-vite/example-react-node",
     "dev": "npm run dev --workspace @smithy-vite/example-vite",
     "dev:preact": "npm run dev --workspace @smithy-vite/example-vite-preact",
     "dev:solid": "npm run dev --workspace @smithy-vite/example-vite-solid",
     "dev:vue": "npm run dev --workspace @smithy-vite/example-vite-vue",
     "dev:angular": "npm run dev --workspace @smithy-vite/example-vite-angular",
-    "build": "npm run build:react && npm run build:preact && npm run build:solid && npm run build:vue && npm run build:angular",
+    "dev:react-node": "npm run dev --workspace @smithy-vite/example-react-node",
+    "build": "npm run build:react && npm run build:preact && npm run build:solid && npm run build:vue && npm run build:angular && npm run build:react-node",
     "build:react": "npm run build --workspace @smithy-vite/example-vite",
     "build:preact": "npm run build --workspace @smithy-vite/example-vite-preact",
     "build:solid": "npm run build --workspace @smithy-vite/example-vite-solid",
     "build:vue": "npm run build --workspace @smithy-vite/example-vite-vue",
     "build:angular": "npm run build --workspace @smithy-vite/example-vite-angular",
-    "typecheck": "npm run typecheck:react && npm run typecheck:preact && npm run typecheck:solid && npm run typecheck:vue && npm run typecheck:angular",
+    "build:react-node": "npm run build --workspace @smithy-vite/example-react-node",
+    "typecheck": "npm run typecheck:react && npm run typecheck:preact && npm run typecheck:solid && npm run typecheck:vue && npm run typecheck:angular && npm run typecheck:react-node",
     "typecheck:react": "npm run typecheck --workspace @smithy-vite/example-vite",
     "typecheck:preact": "npm run typecheck --workspace @smithy-vite/example-vite-preact",
     "typecheck:solid": "npm run typecheck --workspace @smithy-vite/example-vite-solid",
     "typecheck:vue": "npm run typecheck --workspace @smithy-vite/example-vite-vue",
     "typecheck:angular": "npm run typecheck --workspace @smithy-vite/example-vite-angular",
-    "smoke": "node scripts/smoke.mjs"
+    "typecheck:react-node": "npm run typecheck --workspace @smithy-vite/example-react-node",
+    "smoke": "node scripts/smoke.mjs && npm run smoke --workspace @smithy-vite/example-react-node"
   },
   "engines": {
     "node": ">=20.19"
   },
   "devDependencies": {
     "fflate": "^0.8.2"
+  },
+  "optionalDependencies": {
+    "@smithy-vite/smithy-cli-darwin-arm64": "file:packages/smithy-cli-darwin-arm64",
+    "@smithy-vite/smithy-cli-darwin-x64": "file:packages/smithy-cli-darwin-x64",
+    "@smithy-vite/smithy-cli-linux-arm64": "file:packages/smithy-cli-linux-arm64",
+    "@smithy-vite/smithy-cli-linux-x64": "file:packages/smithy-cli-linux-x64",
+    "@smithy-vite/smithy-cli-win32-x64": "file:packages/smithy-cli-win32-x64"
   }
 }

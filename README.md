@@ -1,6 +1,6 @@
 # smithy-vite
 
-`smithy-vite` generates type-safe browser clients and framework-native TanStack Query bindings from Smithy models as part of your Vite build.
+`smithy-vite` is a hermetic npm-native Smithy TypeScript generator with Vite integration and framework-native TanStack Query adapters.
 
 ## Why?
 
@@ -180,11 +180,91 @@ Run `vite` as usual. The client is generated before the development server or
 production build starts, and changes to the model trigger regeneration and a
 full reload.
 
+## Standalone code generation
+
+Vite is optional. Node services, libraries, scripts, and monorepos can install
+only the hermetic generator:
+
+```sh
+npm install --save-dev @smithy-vite/codegen
+```
+
+Create `smithy-vite.json`:
+
+```json
+{
+  "mode": "client",
+  "sources": ["model"],
+  "service": "example.weather#Weather",
+  "output": "src/generated/weather-client",
+  "packageName": "@example/weather-client"
+}
+```
+
+Then add generation to the project's existing npm workflow:
+
+```json
+{
+  "scripts": {
+    "generate": "smithy-vite"
+  }
+}
+```
+
+```sh
+npm run generate
+```
+
+The standalone CLI supports the three modes provided by `smithy-typescript`:
+
+| Mode     | Generates                                          | Selector  |
+| -------- | -------------------------------------------------- | --------- |
+| `client` | A client for a Smithy service                      | `service` |
+| `server` | Typed service handlers and protocol serialization  | `service` |
+| `types`  | Data shapes and schemas from a model shape closure | `closure` |
+
+For example, a Node service can generate its server scaffold without Vite:
+
+```json
+{
+  "mode": "server",
+  "sources": ["model"],
+  "service": "example.weather#Weather",
+  "output": "src/generated/weather-server",
+  "packageName": "@example/weather-server"
+}
+```
+
+Client generation from the standalone CLI is framework-neutral by default.
+Add `"tanstackQuery": { "framework": "react" }` only when the generated
+client should include a TanStack adapter. The Vite plugin continues to default
+to React for its browser-oriented workflow.
+
+The [`examples/react-node`](./examples/react-node) application demonstrates the
+complete split: Vite generates and watches the React client, while a separate
+`smithy-vite` npm script generates the Smithy server handlers consumed by a
+plain `node:http` service. Both sides use the same model; the Node service does
+not run Vite.
+
+From a source checkout:
+
+```sh
+npm run generate:react-node
+npm run dev:react-node
+```
+
+The example's smoke test starts the generated server on an ephemeral port and
+calls it through the generated client:
+
+```sh
+npm run smoke --workspace @smithy-vite/example-react-node
+```
+
 ## Develop this repository
 
 Requirements for working from a source checkout are Node.js 20.19 or newer,
 JDK 17, and Gradle. [devenv](https://devenv.sh/getting-started/) provides the
-pinned Node.js 22, JDK 17, and Gradle toolchain:
+pinned Node.js 24, JDK 17, and Gradle toolchain:
 
 ```sh
 devenv shell
@@ -201,6 +281,7 @@ Prepare the package for the current machine once:
 npm install
 npm run prepare:cli
 npm run build:integration
+npm run prepare:maven
 npm run dev
 ```
 
@@ -236,6 +317,12 @@ npm run generate
 npm run typecheck
 npm run build
 npm run smoke
+```
+
+The same validation used by GitHub Actions is available locally:
+
+```sh
+just ci
 ```
 
 ## Framework adapters
@@ -286,31 +373,77 @@ hooks. Add `provideWeatherClient(weatherClient)` next to
 TanStack Angular Query is currently published as an experimental package, so
 applications should pin its patch version deliberately.
 
+## Toolchains
+
+The default toolchain is fully bundled. `@smithy-vite/codegen` supplies the
+complete pinned Maven repository, and a platform-specific optional npm package
+supplies the Smithy CLI and its Java runtime. Generation emits only a local
+`file:` Maven repository and does not contact Maven Central.
+
+Advanced users can select an all-external toolchain instead. In this mode no
+bundled executable or Maven artifact is consulted: `smithy-vite` invokes the
+configured CLI (or `smithy` from `PATH`) and resolves every codegen plugin from
+the explicitly configured repositories.
+
+```ts
+smithyVite({
+  sources: ["model"],
+  service: "example.weather#Weather",
+  output: "src/generated/weather",
+  toolchain: {
+    mode: "external",
+    smithy: "smithy",
+    maven: {
+      repositories: [
+        {
+          id: "releases",
+          url: "https://maven.example.com/releases",
+        },
+        {
+          id: "central",
+          url: "https://repo.maven.apache.org/maven2",
+        },
+      ],
+    },
+  },
+});
+```
+
+The repositories must contain the pinned `smithy-vite-codegen` integration as
+well as the upstream Smithy TypeScript artifacts, either directly or through
+their normal Maven transitive resolution. External mode intentionally has no
+fallback to the bundled repository.
+
 ## Architecture
 
 - `@smithy-vite/codegen` selects a platform-specific optional npm package,
   writes an ephemeral `smithy-build.json`, and invokes its bundled Smithy CLI
   from Node.
-- The Smithy CLI resolves pinned `smithy-typescript` artifacts from Maven
-  Central and loads the small integration JAR vendored with the npm package.
-- The integration emits framework-native TanStack query and mutation keys,
-  option factories, a typed service-client provider and facade, and named
-  helpers using Smithy's model and generated symbols.
+- `@smithy-vite/codegen` includes the complete pinned Maven closure for
+  `smithy-typescript` and the Smithy Vite integration. The default build uses
+  that file repository exclusively.
+- Client, server, and types generation use the unified `typescript-codegen`
+  plugin. The optional integration emits framework-native TanStack query and
+  mutation keys, option factories, a typed service-client provider and facade,
+  and named helpers for client mode.
 - `@smithy-vite/plugin` runs generation for development and production builds,
   watches model sources, and selects the browser runtime configuration from the
   upstream generated client.
 
-The integration JAR and its local Maven repository are generated build outputs,
-not committed files. Build them before running from source or packing the
-`@smithy-vite/codegen` npm package:
+The integration JAR and its complete local Maven repository are generated build
+outputs, not committed files. Build and verify them before running from source
+or packing the `@smithy-vite/codegen` npm package:
 
 ```sh
 npm run build:integration
+npm run prepare:maven
 ```
 
 The command uses the Gradle and JDK supplied by devenv, or compatible tools on
-`PATH`. Published npm packages include the generated integration JAR, so package
-consumers do not need Gradle or a JDK.
+`PATH`. `prepare:maven` resolves the pinned closure once, records SHA-256
+digests, and proves it by generating again with only the local repository.
+Published npm packages include that verified closure, so package consumers do
+not need Gradle, a JDK, Maven, or network access during generation.
 
 The platform packages are prepared for publishing from checksum-verified
 official Smithy archives. Prepare every supported package with:
@@ -320,3 +453,24 @@ npm run prepare:cli -- --platform all
 ```
 
 See [PLAN.md](./PLAN.md) for the intended product and remaining milestones.
+
+## CI and releases
+
+Pull requests and pushes to `main` run `devenv shell -- just ci`. That workflow
+starts from `npm ci`, prepares the current platform CLI and hermetic Maven
+closure, checks formatting, exercises both toolchain modes, generates and
+type-checks every framework example, builds them, runs live smoke calls, and
+validates the publishable package contents.
+
+Publishing a GitHub Release triggers the release workflow. Its tag supplies the
+version for all seven npm packages and the Maven integration. The workflow
+prepares every platform package, runs the complete validation suite, packs and
+uploads all npm tarballs, and only then starts publishing to Maven Central and
+npm in dependency order.
+
+The release workflow expects Maven Central credentials and signing secrets named
+`MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `MAVEN_GPG_PRIVATE_KEY`, and
+`MAVEN_GPG_PASSPHRASE`. npm publishing uses
+[trusted publishing](https://docs.npmjs.com/trusted-publishers/) through
+`release.yml`; `NPM_TOKEN` can be supplied while initially bootstrapping packages
+that do not yet have a trusted publisher configured.

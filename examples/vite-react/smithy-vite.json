@@ -2,5 +2,8 @@
   "sources": ["model"],
   "service": "example.weather#Weather",
   "output": "src/generated/weather",
-  "packageName": "@smithy-vite/example-weather-client"
+  "packageName": "@smithy-vite/example-weather-client",
+  "tanstackQuery": {
+    "framework": "react"
+  }
 }

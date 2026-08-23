@@ -20,5 +20,10 @@
   "publishConfig": {
     "access": "public"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thomaslaich/smithy-vite.git",
+    "directory": "packages/smithy-cli-darwin-x64"
+  },
   "license": "Apache-2.0"
 }

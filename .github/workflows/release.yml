@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Resolve release version
+        id: version
+        # Strip a leading `v` from the release tag (e.g. v0.1.0 -> 0.1.0).
+        shell: bash
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          version="${tag#v}"
+          if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Release tag '${tag}' does not contain a supported SemVer version."
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${version}"
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+      - name: Configure devenv cache
+        uses: cachix/cachix-action@v16
+        with:
+          name: devenv
+      - name: Install devenv
+        run: nix profile add nixpkgs#devenv
+      - name: Build, test, and pack every release artifact
+        # This is the reversible phase. Nothing is published until the Maven
+        # integration, all five native CLI packages, the hermetic Maven closure,
+        # both common npm packages, and all framework examples have passed.
+        run: devenv shell -- just release-ci "${{ steps.version.outputs.version }}"
+      - name: Upload npm packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages
+          path: artifacts/npm/*.tgz
+          if-no-files-found: error
+      - name: Configure npm token fallback
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            npmrc="$RUNNER_TEMP/npmrc"
+            printf '%s\n' "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > "$npmrc"
+            echo "NPM_CONFIG_USERCONFIG=${npmrc}" >> "$GITHUB_ENV"
+          fi
+      - name: Publish codegen integration to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: devenv shell -- gradle -p codegen -Pversion="${{ steps.version.outputs.version }}" publishAndReleaseToMavenCentral
+      - name: Publish platform toolchains to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          for package in artifacts/npm/smithy-vite-smithy-cli-*.tgz; do
+            devenv shell -- npm publish "$package" --access public --provenance
+          done
+      - name: Publish codegen to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: devenv shell -- npm publish "artifacts/npm/smithy-vite-codegen-${{ steps.version.outputs.version }}.tgz" --access public --provenance
+      - name: Publish Vite plugin to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: devenv shell -- npm publish "artifacts/npm/smithy-vite-plugin-${{ steps.version.outputs.version }}.tgz" --access public --provenance

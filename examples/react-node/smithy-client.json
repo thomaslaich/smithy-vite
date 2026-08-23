@@ -1,0 +1,10 @@
+{
+  "mode": "client",
+  "sources": ["model"],
+  "service": "example.weather#Weather",
+  "output": "src/generated/weather-client",
+  "packageName": "@smithy-vite/example-full-stack-weather-client",
+  "tanstackQuery": {
+    "framework": "react"
+  }
+}
