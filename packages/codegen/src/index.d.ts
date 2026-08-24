@@ -17,12 +17,18 @@ export type ToolchainOptions =
       };
     };
 
+export interface MavenModelOptions {
+  repositories?: MavenRepository[];
+  dependencies?: string[];
+}
+
 interface BaseGenerateOptions {
   root?: string;
   sources: string[];
   output: string;
   packageName?: string;
   toolchain?: ToolchainOptions;
+  maven?: MavenModelOptions;
 }
 
 export interface TanStackQueryOptions {
