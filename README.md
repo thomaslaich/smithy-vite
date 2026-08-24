@@ -180,71 +180,6 @@ Run `vite` as usual. The client is generated before the development server or
 production build starts, and changes to the model trigger regeneration and a
 full reload.
 
-## Standalone code generation
-
-Vite is optional. Node services, libraries, scripts, and monorepos can install
-only the hermetic generator:
-
-```sh
-npm install --save-dev @smithy-vite/codegen
-```
-
-Create `smithy-vite.json`:
-
-```json
-{
-  "mode": "client",
-  "sources": ["model"],
-  "service": "example.weather#Weather",
-  "output": "src/generated/weather-client",
-  "packageName": "@example/weather-client"
-}
-```
-
-Then add generation to the project's existing npm workflow:
-
-```json
-{
-  "scripts": {
-    "generate": "smithy-vite"
-  }
-}
-```
-
-```sh
-npm run generate
-```
-
-The standalone CLI supports the three modes provided by `smithy-typescript`:
-
-| Mode     | Generates                                          | Selector  |
-| -------- | -------------------------------------------------- | --------- |
-| `client` | A client for a Smithy service                      | `service` |
-| `server` | Typed service handlers and protocol serialization  | `service` |
-| `types`  | Data shapes and schemas from a model shape closure | `closure` |
-
-For example, a Node service can generate its server scaffold without Vite:
-
-```json
-{
-  "mode": "server",
-  "sources": ["model"],
-  "service": "example.weather#Weather",
-  "output": "src/generated/weather-server",
-  "packageName": "@example/weather-server"
-}
-```
-
-Client generation from the standalone CLI is framework-neutral by default.
-Add `"tanstackQuery": { "framework": "react" }` only when the generated
-client should include a TanStack adapter. The Vite plugin continues to default
-to React for its browser-oriented workflow.
-
-The [`examples/react-node`](./examples/react-node) application demonstrates the
-complete split: Vite generates and watches the React client, while the
-standalone generator emits server handlers for a plain `node:http` service.
-Both sides use the same model; the Node service does not run Vite.
-
 ## Development
 
 The recommended way to work on this repository is with
@@ -313,6 +248,48 @@ hooks. Add `provideWeatherClient(weatherClient)` next to
 TanStack Angular Query is currently published as an experimental package, so
 applications should pin its patch version deliberately.
 
+## Consuming a published contract
+
+The model does not have to live in the same repository as the frontend. When
+the API contract is owned by another team and published as a Maven artifact
+(a jar with models under `META-INF/smithy`, the standard Smithy convention),
+add it with the `maven` option:
+
+```ts
+smithyVite({
+  sources: [],
+  service: "example.weather#Weather",
+  output: "src/generated/weather",
+  maven: {
+    repositories: [
+      { id: "releases", url: "https://maven.example.com/releases" },
+    ],
+    dependencies: ["example.contracts:weather-model:1.2.0"],
+  },
+});
+```
+
+The shapes in the artifact become part of the assembled model, so `service`
+can point at a service the repository never defines locally. `sources` may be
+empty, or contain local models that build on the published ones.
+
+`maven.dependencies` are appended to the pinned codegen dependencies and
+`maven.repositories` to the toolchain repositories, in both toolchain modes.
+The bundled toolchain itself remains hermetic: the generator and its plugins
+still come only from the bundled repository. Resolving the model
+artifacts naturally contacts the configured repositories. Results are cached
+in `.smithy-vite/maven-cache`, and in bundled mode at least one repository
+must be configured whenever `maven.dependencies` is present.
+
+Alternatively, a contract can stay inside the npm ecosystem entirely: publish
+the `.smithy` files as an npm package and point `sources` at it, for example
+`sources: ["node_modules/@example/weather-model/model"]`. This keeps
+generation fully offline and version-locked through the package lockfile, and
+needs no Maven registry. Prefer it when the contract only uses traits already
+on the bundled classpath (the standard Smithy and AWS protocol traits); a
+contract that ships custom trait definitions or validators as Java code needs
+the Maven route.
+
 ## Toolchains
 
 The default toolchain is fully bundled. `@smithy-vite/codegen` supplies the
@@ -353,3 +330,8 @@ The repositories must contain the pinned `smithy-vite-codegen` integration as
 well as the upstream Smithy TypeScript artifacts, either directly or through
 their normal Maven transitive resolution. External mode intentionally has no
 fallback to the bundled repository.
+
+`toolchain.maven` configures where the code generator comes from, and setting
+`toolchain.maven.dependencies` replaces the default codegen dependencies
+entirely. Model dependencies belong in the top-level `maven` option instead,
+which appends to the toolchain configuration in both modes.
