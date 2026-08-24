@@ -180,26 +180,6 @@ Run `vite` as usual. The client is generated before the development server or
 production build starts, and changes to the model trigger regeneration and a
 full reload.
 
-## Development
-
-The recommended way to work on this repository is with
-[Nix](https://nixos.org/) and [devenv](https://devenv.sh/).
-
-1. Install Nix (recommended: [Determinate Nix](https://determinate.systems/nix/))
-   and devenv.
-2. Optionally install [direnv](https://direnv.net/) and run `direnv allow` to
-   activate the environment when entering the repository. Without it, run
-   `devenv shell` manually.
-3. Use the `just` recipes to prepare, format, and validate the repository:
-
-```sh
-just                # list all available recipes
-just prepare        # install dependencies and stage the local toolchain
-just fmt            # format all code
-just validate       # generate, type-check, build, and test packages
-just ci             # run the full CI pipeline locally
-```
-
 ## Framework adapters
 
 React is the default adapter and emits imports from `react` and
@@ -335,3 +315,23 @@ fallback to the bundled repository.
 `toolchain.maven.dependencies` replaces the default codegen dependencies
 entirely. Model dependencies belong in the top-level `maven` option instead,
 which appends to the toolchain configuration in both modes.
+
+## Development
+
+The recommended way to work on this repository is with
+[Nix](https://nixos.org/) and [devenv](https://devenv.sh/).
+
+1. Install Nix (recommended: [Determinate Nix](https://determinate.systems/nix/))
+   and devenv.
+2. Optionally install [direnv](https://direnv.net/) and run `direnv allow` to
+   activate the environment when entering the repository. Without it, run
+   `devenv shell` manually.
+3. Use the `just` recipes to prepare, format, and validate the repository:
+
+```sh
+just                # list all available recipes
+just prepare        # install dependencies and stage the local toolchain
+just fmt            # format all code
+just validate       # generate, type-check, build, and test packages
+just ci             # run the full CI pipeline locally
+```
