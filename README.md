@@ -228,6 +228,18 @@ hooks. Add `provideWeatherClient(weatherClient)` next to
 TanStack Angular Query is currently published as an experimental package, so
 applications should pin its patch version deliberately.
 
+## Generation modes
+
+Vite is optional. `@smithy-vite/codegen` also ships a standalone `smithy-vite`
+CLI that reads the same options from a `smithy-vite.json` and supports three
+modes: `client` generates a client for a `service`, `server` generates typed
+service handlers, and `types` generates data shapes from a model `closure`.
+Standalone client generation stays framework-neutral unless `tanstackQuery`
+is configured. The [`examples/react-node`](./examples/react-node) application
+shows the full split: Vite generates and watches the React client, while the
+standalone CLI emits server handlers for a plain `node:http` service from the
+same model.
+
 ## Consuming a published contract
 
 The model does not have to live in the same repository as the frontend. When
