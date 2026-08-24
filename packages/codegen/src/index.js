@@ -70,6 +70,8 @@ export async function generate(options) {
   const mode = options.mode ?? "client";
   const toolchain = options.toolchain ?? { mode: "bundled" };
   const toolchainMode = toolchain.mode ?? "bundled";
+  const modelRepositories = options.maven?.repositories ?? [];
+  const modelDependencies = options.maven?.dependencies ?? [];
   let smithy;
   let repositories;
   let dependencies;
@@ -81,11 +83,17 @@ export async function generate(options) {
         { cause: error },
       );
     });
+    if (modelDependencies.length > 0 && modelRepositories.length === 0) {
+      throw new Error(
+        "The bundled repository only contains the pinned toolchain, so maven.dependencies requires at least one maven.repositories entry to resolve model artifacts from.",
+      );
+    }
     smithy = await resolveBundledSmithyCli();
     repositories = [
       { id: "smithy-vite-bundled", url: pathToFileURL(localMaven).href },
+      ...modelRepositories,
     ];
-    dependencies = defaultCodegenDependencies(mode);
+    dependencies = [...defaultCodegenDependencies(mode), ...modelDependencies];
   } else if (toolchainMode === "external") {
     if (
       !Array.isArray(toolchain.maven?.repositories) ||
@@ -99,9 +107,11 @@ export async function generate(options) {
       executable: toolchain.smithy ?? "smithy",
       arguments: toolchain.smithyArguments ?? [],
     };
-    repositories = toolchain.maven.repositories;
-    dependencies =
-      toolchain.maven?.dependencies ?? defaultCodegenDependencies(mode);
+    repositories = [...toolchain.maven.repositories, ...modelRepositories];
+    dependencies = [
+      ...(toolchain.maven?.dependencies ?? defaultCodegenDependencies(mode)),
+      ...modelDependencies,
+    ];
   } else {
     throw new Error(`Unsupported Smithy Vite toolchain mode: ${toolchainMode}`);
   }
