@@ -4,16 +4,10 @@
 
 ## Why?
 
-The official [`smithy-typescript` documentation](https://github.com/smithy-lang/smithy-typescript#using-smithy-typescript-with-gradle)
-describes a Gradle workflow for generating TypeScript clients. That is a natural
-fit for the Smithy and JVM ecosystem, but frontend developers generally do not
-want to introduce and maintain a second build system just to generate their
-client. They already have one: Vite.
-
-`smithy-vite` makes client generation part of that existing workflow. Running
-Vite generates the client, watches the model, and exposes errors where frontend
-developers already expect them, while still using the official
-`smithy-typescript` generator underneath.
+The official [`smithy-typescript`](https://github.com/smithy-lang/smithy-typescript)
+generator normally runs through a JVM build. `smithy-vite` packages that
+toolchain for npm and integrates generation, model watching, and diagnostics
+into Vite without replacing the official generator.
 
 ## Getting started
 
@@ -241,88 +235,28 @@ client should include a TanStack adapter. The Vite plugin continues to default
 to React for its browser-oriented workflow.
 
 The [`examples/react-node`](./examples/react-node) application demonstrates the
-complete split: Vite generates and watches the React client, while a separate
-`smithy-vite` npm script generates the Smithy server handlers consumed by a
-plain `node:http` service. Both sides use the same model; the Node service does
-not run Vite.
+complete split: Vite generates and watches the React client, while the
+standalone generator emits server handlers for a plain `node:http` service.
+Both sides use the same model; the Node service does not run Vite.
 
-From a source checkout:
+## Development
 
-```sh
-npm run generate:react-node
-npm run dev:react-node
-```
+The recommended way to work on this repository is with
+[Nix](https://nixos.org/) and [devenv](https://devenv.sh/).
 
-The example's smoke test starts the generated server on an ephemeral port and
-calls it through the generated client:
-
-```sh
-npm run smoke --workspace @smithy-vite/example-react-node
-```
-
-## Develop this repository
-
-Requirements for working from a source checkout are Node.js 20.19 or newer,
-JDK 17, and Gradle. [devenv](https://devenv.sh/getting-started/) provides the
-pinned Node.js 24, JDK 17, and Gradle toolchain:
+1. Install Nix (recommended: [Determinate Nix](https://determinate.systems/nix/))
+   and devenv.
+2. Optionally install [direnv](https://direnv.net/) and run `direnv allow` to
+   activate the environment when entering the repository. Without it, run
+   `devenv shell` manually.
+3. Use the `just` recipes to prepare, format, and validate the repository:
 
 ```sh
-devenv shell
-```
-
-With [direnv](https://direnv.net/) installed, run `direnv allow` once instead
-to activate that environment when entering the repository. Using devenv is not
-required; the standard npm workflow continues to work with locally installed
-tools.
-
-Prepare the package for the current machine once:
-
-```sh
-npm install
-npm run prepare:cli
-npm run build:integration
-npm run prepare:maven
-npm run dev
-```
-
-Open <http://localhost:5173>. Vite generates the React client before starting,
-and the example calls a small development-only weather-service mock through the
-generated `WeatherClientProvider` and `useGetCityQuery` hook. Run the equivalent
-Preact example with:
-
-```sh
-npm run dev:preact
-```
-
-Or run the Solid example with:
-
-```sh
-npm run dev:solid
-```
-
-The Vue and Angular examples are available in the same way:
-
-```sh
-npm run dev:vue
-npm run dev:angular
-```
-
-Edit the active example's `model/weather.smithy` while Vite is running to
-trigger regeneration and a page reload.
-
-Other useful commands:
-
-```sh
-npm run generate
-npm run typecheck
-npm run build
-npm run smoke
-```
-
-The same validation used by GitHub Actions is available locally:
-
-```sh
-just ci
+just                # list all available recipes
+just prepare        # install dependencies and stage the local toolchain
+just fmt            # format all code
+just validate       # generate, type-check, build, and test packages
+just ci             # run the full CI pipeline locally
 ```
 
 ## Framework adapters
@@ -413,64 +347,3 @@ The repositories must contain the pinned `smithy-vite-codegen` integration as
 well as the upstream Smithy TypeScript artifacts, either directly or through
 their normal Maven transitive resolution. External mode intentionally has no
 fallback to the bundled repository.
-
-## Architecture
-
-- `@smithy-vite/codegen` selects a platform-specific optional npm package,
-  writes an ephemeral `smithy-build.json`, and invokes its bundled Smithy CLI
-  from Node.
-- `@smithy-vite/codegen` includes the complete pinned Maven closure for
-  `smithy-typescript` and the Smithy Vite integration. The default build uses
-  that file repository exclusively.
-- Client, server, and types generation use the unified `typescript-codegen`
-  plugin. The optional integration emits framework-native TanStack query and
-  mutation keys, option factories, a typed service-client provider and facade,
-  and named helpers for client mode.
-- `@smithy-vite/plugin` runs generation for development and production builds,
-  watches model sources, and selects the browser runtime configuration from the
-  upstream generated client.
-
-The integration JAR and its complete local Maven repository are generated build
-outputs, not committed files. Build and verify them before running from source
-or packing the `@smithy-vite/codegen` npm package:
-
-```sh
-npm run build:integration
-npm run prepare:maven
-```
-
-The command uses the Gradle and JDK supplied by devenv, or compatible tools on
-`PATH`. `prepare:maven` resolves the pinned closure once, records SHA-256
-digests, and proves it by generating again with only the local repository.
-Published npm packages include that verified closure, so package consumers do
-not need Gradle, a JDK, Maven, or network access during generation.
-
-The platform packages are prepared for publishing from checksum-verified
-official Smithy archives. Prepare every supported package with:
-
-```sh
-npm run prepare:cli -- --platform all
-```
-
-See [PLAN.md](./PLAN.md) for the intended product and remaining milestones.
-
-## CI and releases
-
-Pull requests and pushes to `main` run `devenv shell -- just ci`. That workflow
-starts from `npm ci`, prepares the current platform CLI and hermetic Maven
-closure, checks formatting, exercises both toolchain modes, generates and
-type-checks every framework example, builds them, runs live smoke calls, and
-validates the publishable package contents.
-
-Publishing a GitHub Release triggers the release workflow. Its tag supplies the
-version for all seven npm packages and the Maven integration. The workflow
-prepares every platform package, runs the complete validation suite, packs and
-uploads all npm tarballs, and only then starts publishing to Maven Central and
-npm in dependency order.
-
-The release workflow expects Maven Central credentials and signing secrets named
-`MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `MAVEN_GPG_PRIVATE_KEY`, and
-`MAVEN_GPG_PASSPHRASE`. npm publishing uses
-[trusted publishing](https://docs.npmjs.com/trusted-publishers/) through
-`release.yml`; `NPM_TOKEN` can be supplied while initially bootstrapping packages
-that do not yet have a trusted publisher configured.
