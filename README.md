@@ -4,10 +4,16 @@
 
 ## Why?
 
-The official [`smithy-typescript`](https://github.com/smithy-lang/smithy-typescript)
-generator normally runs through a JVM build. `smithy-vite` packages that
-toolchain for npm and integrates generation, model watching, and diagnostics
-into Vite without replacing the official generator.
+The official [`smithy-typescript` documentation](https://github.com/smithy-lang/smithy-typescript#using-smithy-typescript-with-gradle)
+describes a Gradle workflow for generating TypeScript clients. That is a natural
+fit for the Smithy and JVM ecosystem, but frontend developers generally do not
+want to introduce and maintain a second build system just to generate their
+client. They already have one: Vite.
+
+`smithy-vite` makes client generation part of that existing workflow. Running
+Vite generates the client, watches the model, and exposes errors where frontend
+developers already expect them, while still using the official
+`smithy-typescript` generator underneath.
 
 ## Getting started
 
