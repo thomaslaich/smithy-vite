@@ -30,6 +30,12 @@ tasks.withType<JavaCompile>().configureEach {
     options.release = 17
 }
 
+tasks.withType<AbstractArchiveTask>().configureEach {
+    from(layout.projectDirectory.file("../LICENSE")) {
+        into("META-INF")
+    }
+}
+
 publishing {
     repositories {
         maven {

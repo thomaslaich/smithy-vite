@@ -2,6 +2,7 @@
   "name": "@smithy-vite/example-react-node",
   "version": "0.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "generate": "npm run generate:client && npm run generate:server",
