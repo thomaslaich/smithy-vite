@@ -2,6 +2,7 @@
   "name": "@smithy-vite/example-vite-solid",
   "version": "0.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "generate": "smithy-vite --config smithy-vite.json",
