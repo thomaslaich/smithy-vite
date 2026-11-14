@@ -38,7 +38,7 @@
     "build:vue": "npm run build --workspace @smithy-vite/example-vite-vue",
     "build:angular": "npm run build --workspace @smithy-vite/example-vite-angular",
     "build:react-node": "npm run build --workspace @smithy-vite/example-react-node",
-    "typecheck": "npm run typecheck:react && npm run typecheck:preact && npm run typecheck:solid && npm run typecheck:vue && npm run typecheck:angular && npm run typecheck:react-node",
+    "typecheck": "tsc -p packages/tsconfig.json && npm run typecheck:react && npm run typecheck:preact && npm run typecheck:solid && npm run typecheck:vue && npm run typecheck:angular && npm run typecheck:react-node",
     "typecheck:react": "npm run typecheck --workspace @smithy-vite/example-vite",
     "typecheck:preact": "npm run typecheck --workspace @smithy-vite/example-vite-preact",
     "typecheck:solid": "npm run typecheck --workspace @smithy-vite/example-vite-solid",

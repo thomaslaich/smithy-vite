@@ -45,7 +45,7 @@ async function resolveBundledSmithyCli() {
             packageName.slice("@smithy-vite/".length),
             "index.js",
           ),
-        )
+        ).href
       );
       await access(localPackage.smithyCommand.executable);
       return localPackage.smithyCommand;
@@ -96,6 +96,10 @@ function validateOptions(options) {
   }
 }
 
+/**
+ * @param {import("./index.js").GenerateOptions} options
+ * @returns {Promise<import("./index.js").GenerateResult>}
+ */
 export async function generate(options) {
   validateOptions(options);
   const root = resolve(options.root ?? process.cwd());
@@ -108,32 +112,13 @@ export async function generate(options) {
   const localMaven = resolve(packageRoot, "vendor", "maven");
   const mode = options.mode ?? "client";
   const toolchain = options.toolchain ?? { mode: "bundled" };
-  const toolchainMode = toolchain.mode ?? "bundled";
   const modelRepositories = options.maven?.repositories ?? [];
   const modelDependencies = options.maven?.dependencies ?? [];
   let smithy;
   let repositories;
   let dependencies;
 
-  if (toolchainMode === "bundled") {
-    await access(join(localMaven, "manifest.json")).catch((error) => {
-      throw new Error(
-        "The bundled Maven toolchain is unavailable. Reinstall @smithy-vite/codegen, or run `npm run build:integration` followed by `npm run prepare:maven` in a source checkout.",
-        { cause: error },
-      );
-    });
-    if (modelDependencies.length > 0 && modelRepositories.length === 0) {
-      throw new Error(
-        "The bundled repository only contains the pinned toolchain, so maven.dependencies requires at least one maven.repositories entry to resolve model artifacts from.",
-      );
-    }
-    smithy = await resolveBundledSmithyCli();
-    repositories = [
-      { id: "smithy-vite-bundled", url: pathToFileURL(localMaven).href },
-      ...modelRepositories,
-    ];
-    dependencies = [...defaultCodegenDependencies(mode), ...modelDependencies];
-  } else {
+  if (toolchain.mode === "external") {
     if (
       !Array.isArray(toolchain.maven?.repositories) ||
       toolchain.maven.repositories.length === 0
@@ -151,6 +136,24 @@ export async function generate(options) {
       ...(toolchain.maven?.dependencies ?? defaultCodegenDependencies(mode)),
       ...modelDependencies,
     ];
+  } else {
+    await access(join(localMaven, "manifest.json")).catch((error) => {
+      throw new Error(
+        "The bundled Maven toolchain is unavailable. Reinstall @smithy-vite/codegen, or run `npm run build:integration` followed by `npm run prepare:maven` in a source checkout.",
+        { cause: error },
+      );
+    });
+    if (modelDependencies.length > 0 && modelRepositories.length === 0) {
+      throw new Error(
+        "The bundled repository only contains the pinned toolchain, so maven.dependencies requires at least one maven.repositories entry to resolve model artifacts from.",
+      );
+    }
+    smithy = await resolveBundledSmithyCli();
+    repositories = [
+      { id: "smithy-vite-bundled", url: pathToFileURL(localMaven).href },
+      ...modelRepositories,
+    ];
+    dependencies = [...defaultCodegenDependencies(mode), ...modelDependencies];
   }
   const tanstackFramework = options.tanstackQuery
     ? (options.tanstackQuery.framework ?? "react")
@@ -171,10 +174,11 @@ export async function generate(options) {
         packageVersion: "0.0.0",
         private: true,
         modes: [mode],
-        ...(mode === "types"
+        ...(options.mode === "types"
           ? { closure: options.closure }
           : { service: options.service }),
-        ...(mode === "server" && options.disableDefaultValidation !== undefined
+        ...(options.mode === "server" &&
+        options.disableDefaultValidation !== undefined
           ? { disableDefaultValidation: options.disableDefaultValidation }
           : {}),
         // Read by the smithy-vite-codegen integration. smithy-typescript logs a

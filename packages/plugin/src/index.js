@@ -7,6 +7,10 @@ import { coalesce } from "./regenerate.js";
 // change), so wait briefly for them to settle before regenerating.
 const settleMilliseconds = 100;
 
+/**
+ * @param {Parameters<typeof import("./index.js").smithyVite>[0]} options
+ * @returns {import("vite").Plugin}
+ */
 export function smithyVite(options) {
   if (options.mode && options.mode !== "client") {
     throw new Error("The Vite plugin only supports client generation.");
@@ -90,12 +94,7 @@ export function smithyVite(options) {
           await run;
           // Vite does not watch the output, so drop its cached transforms of
           // generated modules before the page reloads and requests them again.
-          const moduleGraphs = server.environments
-            ? Object.values(server.environments).map(
-                (environment) => environment.moduleGraph,
-              )
-            : [server.moduleGraph];
-          for (const moduleGraph of moduleGraphs) {
+          for (const { moduleGraph } of Object.values(server.environments)) {
             for (const [file, modules] of moduleGraph.fileToModulesMap) {
               if (!isGenerated(file)) continue;
               for (const module of modules)
