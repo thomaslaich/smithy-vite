@@ -9,6 +9,7 @@
     "examples/*"
   ],
   "scripts": {
+    "build:integration": "gradle -p codegen publishMavenPublicationToSpikeRepository",
     "prepare:cli": "node scripts/prepare-smithy-cli-packages.mjs",
     "prepare:maven": "node scripts/prepare-maven-repository.mjs",
     "check:toolchains": "node scripts/check-toolchain-modes.mjs",
