@@ -9,6 +9,9 @@
       "import": "./src/index.js"
     }
   },
+  "files": [
+    "src"
+  ],
   "dependencies": {
     "@smithy-vite/codegen": "0.0.1-spike"
   },

@@ -15,6 +15,7 @@
     "check:toolchains": "node scripts/check-toolchain-modes.mjs",
     "check:packages": "node scripts/check-packages.mjs",
     "check:dependency-ranges": "node scripts/check-dependency-ranges.mjs",
+    "test:unit": "node --test \"packages/*/test/*.test.js\"",
     "check:snapshots": "node scripts/check-snapshots.mjs",
     "update:snapshots": "node scripts/check-snapshots.mjs --update",
     "generate": "npm run generate:react && npm run generate:preact && npm run generate:solid && npm run generate:vue && npm run generate:angular && npm run generate:react-node",

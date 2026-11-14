@@ -176,7 +176,9 @@ export async function generate(options) {
     },
   };
 
-  await rm(smithyOutput, { recursive: true, force: true });
+  // Keep smithy-output/classpath.json: Smithy caches the resolved Maven
+  // classpath there and revalidates it against the configured dependencies.
+  await rm(join(smithyOutput, "source"), { recursive: true, force: true });
   await rm(staged, { recursive: true, force: true });
   await mkdir(work, { recursive: true });
   const configPath = join(work, "smithy-build.json");
