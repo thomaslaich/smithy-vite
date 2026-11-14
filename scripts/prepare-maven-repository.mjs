@@ -84,7 +84,7 @@ async function runBuild({ repositories, cache, output, configName }) {
   };
   await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);
   try {
-    await execFileAsync(
+    const debug = await execFileAsync(
       smithyCommand.executable,
       [
         ...smithyCommand.arguments,
@@ -104,6 +104,8 @@ async function runBuild({ repositories, cache, output, configName }) {
         maxBuffer: 10 * 1024 * 1024,
       },
     );
+    console.log("DEBUG", JSON.stringify({ cache, smithyCommand, configPath }), debug.stdout, debug.stderr);
+    console.log("DEBUG ls temp", await readdir(temporaryRoot));
   } catch (error) {
     const details = [error.stdout, error.stderr].filter(Boolean).join("\n");
     throw new Error(
