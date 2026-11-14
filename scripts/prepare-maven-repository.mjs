@@ -84,7 +84,7 @@ async function runBuild({ repositories, cache, output, configName }) {
   };
   await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);
   try {
-    const debug = await execFileAsync(
+    await execFileAsync(
       smithyCommand.executable,
       [
         ...smithyCommand.arguments,
@@ -95,7 +95,10 @@ async function runBuild({ repositories, cache, output, configName }) {
         output,
       ],
       {
-        cwd: repositoryRoot,
+        // Smithy's Maven resolver drops the drive letter from SMITHY_MAVEN_CACHE
+        // on Windows and resolves it against the working directory's drive, so
+        // run from the temporary root to keep both on the same drive.
+        cwd: temporaryRoot,
         env: {
           ...process.env,
           SMITHY_MAVEN_CACHE: cache,
@@ -104,10 +107,6 @@ async function runBuild({ repositories, cache, output, configName }) {
         maxBuffer: 10 * 1024 * 1024,
       },
     );
-    console.log("DEBUG", JSON.stringify({ cache, smithyCommand, configPath }), debug.stdout, debug.stderr);
-    console.log("DEBUG ls temp", await readdir(temporaryRoot));
-    console.log("DEBUG ls output", await readdir(output));
-    console.log("DEBUG classpath", await readFile(join(output, "classpath.json"), "utf8").catch((e) => String(e)));
   } catch (error) {
     const details = [error.stdout, error.stderr].filter(Boolean).join("\n");
     throw new Error(
