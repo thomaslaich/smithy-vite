@@ -26,6 +26,12 @@ jobs:
           - windows-latest
           - ubuntu-24.04-arm
     runs-on: ${{ matrix.os }}
+    # smithy-typescript 0.52.0 builds some relative imports with
+    # java.nio.file.Paths, so on Windows they are emitted without separators
+    # (for example "..modelsWeatherServiceException") and the generated client
+    # does not compile. Keep the job visible but non-blocking until that is
+    # fixed upstream.
+    continue-on-error: ${{ matrix.os == 'windows-latest' }}
     defaults:
       run:
         shell: bash
