@@ -1,0 +1,79 @@
+// smithy-typescript generated code
+import { type Provider, inject, InjectionToken } from "@angular/core";
+import {
+  type CreateMutationOptions,
+  type CreateMutationResult,
+  injectMutation,
+  mutationOptions,
+} from "@tanstack/angular-query-experimental";
+
+import {
+  type RunCommandCommandInput,
+  type RunCommandCommandOutput,
+  RunCommandCommand,
+} from "./commands/RunCommandCommand";
+import type { CommandsClient } from "./CommandsClient";
+
+
+export const runCommandMutationKey = () =>
+  ["example.fixtures#Commands", "example.fixtures#RunCommand"] as const;
+
+export const runCommandMutationOptions = (
+  client: CommandsClient,
+) =>
+  mutationOptions({
+    mutationKey: runCommandMutationKey(),
+    mutationFn: (input: RunCommandCommandInput) =>
+      client.send(new RunCommandCommand(input)),
+  });
+
+const CommandsClientToken = new InjectionToken<CommandsClient>("CommandsClient");
+
+export const provideCommandsClient = (client: CommandsClient): Provider => ({
+  provide: CommandsClientToken,
+  useValue: client,
+});
+
+export const injectCommandsClient = () => inject(CommandsClientToken);
+
+export const createCommandsApi = (client: CommandsClient) => ({
+  runCommand: {
+    mutationKey: runCommandMutationKey,
+    mutationOptions: () => runCommandMutationOptions(client),
+  },
+});
+
+export type CommandsApi = ReturnType<typeof createCommandsApi>;
+
+export const injectCommandsApi = () =>
+  createCommandsApi(injectCommandsClient());
+
+export type RunCommandMutationOptions<TOnMutateResult = unknown> = Omit<
+  CreateMutationOptions<
+    RunCommandCommandOutput,
+    Error,
+    RunCommandCommandInput,
+    TOnMutateResult
+   >,
+  "mutationKey" | "mutationFn"
+>;
+
+export const injectRunCommandMutation = <TOnMutateResult = unknown>(
+  options?: RunCommandMutationOptions<TOnMutateResult>,
+): CreateMutationResult<
+  RunCommandCommandOutput,
+  Error,
+  RunCommandCommandInput,
+  TOnMutateResult
+> => {
+  const client = injectCommandsClient();
+  return injectMutation<
+    RunCommandCommandOutput,
+    Error,
+    RunCommandCommandInput,
+    TOnMutateResult
+  >(() => {
+    const { mutationKey, mutationFn } = runCommandMutationOptions(client);
+    return { ...options, mutationKey, mutationFn };
+  });
+};

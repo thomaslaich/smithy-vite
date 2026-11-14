@@ -1,0 +1,81 @@
+// smithy-typescript generated code
+import { type QueryOptions, type UseQueryReturnType, queryOptions, useQuery } from "@tanstack/vue-query";
+import { type App, type InjectionKey, type MaybeRefOrGetter, type Plugin, inject, toValue } from "vue";
+
+import { type GetReportCommandInput, type GetReportCommandOutput, GetReportCommand } from "./commands/GetReportCommand";
+import type { ReportsClient } from "./ReportsClient";
+
+
+export const getReportQueryKey = (input: GetReportCommandInput) =>
+  ["example.fixtures#Reports", "example.fixtures#GetReport", input] as const;
+
+export const getReportQueryOptions = (
+  client: ReportsClient,
+  input: GetReportCommandInput,
+) =>
+  queryOptions({
+    queryKey: getReportQueryKey(input),
+    queryFn: ({ signal }) => client.send(new GetReportCommand(input), { abortSignal: signal }),
+  });
+
+const ReportsClientKey: InjectionKey<ReportsClient> = Symbol("ReportsClient");
+
+export const provideReportsClient = (client: ReportsClient): Plugin => ({
+  install(app: App) {
+    app.provide(ReportsClientKey, client);
+  },
+});
+
+export const useReportsClient = () => {
+  const client = inject(ReportsClientKey);
+  if (!client) {
+    throw new Error("useReportsClient requires app.use(provideReportsClient(client))");
+  }
+  return client;
+};
+
+export const createReportsApi = (client: ReportsClient) => ({
+  getReport: {
+    queryKey: getReportQueryKey,
+    queryOptions: (input: GetReportCommandInput) =>
+      getReportQueryOptions(client, input),
+  },
+});
+
+export type ReportsApi = ReturnType<typeof createReportsApi>;
+
+export const useReportsApi = () => {
+  const client = useReportsClient();
+  return createReportsApi(client);
+};
+
+export type GetReportQueryOptions<TData = GetReportCommandOutput> = Omit<
+  QueryOptions<
+    GetReportCommandOutput,
+    Error,
+    TData,
+    GetReportCommandOutput,
+    ReturnType<typeof getReportQueryKey>
+  >,
+  "queryKey" | "queryFn"
+>;
+
+export const useGetReportQuery = <TData = GetReportCommandOutput>(
+  input: MaybeRefOrGetter<GetReportCommandInput>,
+  options?: GetReportQueryOptions<TData>,
+): UseQueryReturnType<TData, Error> => {
+  const client = useReportsClient();
+  return useQuery<
+    GetReportCommandOutput,
+    Error,
+    TData,
+    ReturnType<typeof getReportQueryKey>
+  >(() => {
+    const resolvedInput = toValue(input);
+    return {
+      ...options,
+      queryKey: getReportQueryKey(resolvedInput),
+      queryFn: ({ signal }) => client.send(new GetReportCommand(resolvedInput), { abortSignal: signal }),
+    };
+  });
+};
