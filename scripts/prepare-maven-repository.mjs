@@ -79,6 +79,7 @@ async function runBuild({ repositories, cache, output, configName }) {
         package: "@smithy-vite/toolchain-verification",
         packageVersion: "0.0.0",
         private: true,
+        tanstackQuery: { framework: "react" },
       },
     },
   };
@@ -99,7 +100,6 @@ async function runBuild({ repositories, cache, output, configName }) {
         env: {
           ...process.env,
           SMITHY_MAVEN_CACHE: cache,
-          SMITHY_VITE_TANSTACK_FRAMEWORK: "react",
         },
         maxBuffer: 10 * 1024 * 1024,
       },
@@ -201,6 +201,20 @@ try {
     output: join(temporaryRoot, "offline-output"),
     configName: "offline-smithy-build.json",
   });
+
+  // Workspace projects cache resolved artifacts per version, and a source
+  // checkout rebuilds the integration without changing its version, so drop
+  // those caches to make the next generation pick up the new jars.
+  const exampleRoots = await readdir(join(repositoryRoot, "examples"));
+  for (const project of [
+    repositoryRoot,
+    ...exampleRoots.map((name) => join(repositoryRoot, "examples", name)),
+  ]) {
+    await rm(join(project, ".smithy-vite", "maven-cache"), {
+      recursive: true,
+      force: true,
+    });
+  }
 
   const jars = artifactFiles.filter((file) => file.endsWith(".jar")).length;
   console.log(

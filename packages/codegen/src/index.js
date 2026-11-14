@@ -115,7 +115,9 @@ export async function generate(options) {
   } else {
     throw new Error(`Unsupported Smithy Vite toolchain mode: ${toolchainMode}`);
   }
-  const tanstackFramework = options.tanstackQuery?.framework ?? "none";
+  const tanstackFramework = options.tanstackQuery
+    ? (options.tanstackQuery.framework ?? "react")
+    : undefined;
 
   if (mode !== "client" && mode !== "server" && mode !== "types") {
     throw new Error(`Unsupported TypeScript codegen mode: ${mode}`);
@@ -136,12 +138,8 @@ export async function generate(options) {
   }
 
   if (
-    tanstackFramework !== "none" &&
-    tanstackFramework !== "react" &&
-    tanstackFramework !== "preact" &&
-    tanstackFramework !== "solid" &&
-    tanstackFramework !== "vue" &&
-    tanstackFramework !== "angular"
+    tanstackFramework !== undefined &&
+    !["react", "preact", "solid", "vue", "angular"].includes(tanstackFramework)
   ) {
     throw new Error(
       `Unsupported TanStack Query framework: ${tanstackFramework}`,
@@ -169,6 +167,11 @@ export async function generate(options) {
         ...(mode === "server" && options.disableDefaultValidation !== undefined
           ? { disableDefaultValidation: options.disableDefaultValidation }
           : {}),
+        // Read by the smithy-vite-codegen integration. smithy-typescript logs a
+        // warning for this unknown setting but passes it through.
+        ...(tanstackFramework
+          ? { tanstackQuery: { framework: tanstackFramework } }
+          : {}),
       },
     },
   };
@@ -195,7 +198,6 @@ export async function generate(options) {
         env: {
           ...process.env,
           SMITHY_MAVEN_CACHE: mavenCache,
-          SMITHY_VITE_TANSTACK_FRAMEWORK: tanstackFramework,
         },
         maxBuffer: 10 * 1024 * 1024,
       },
