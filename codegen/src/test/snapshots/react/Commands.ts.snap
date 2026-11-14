@@ -63,7 +63,7 @@ export type RunCommandMutationOptions<TOnMutateResult = unknown> = Omit<
     Error,
     RunCommandCommandInput,
     TOnMutateResult
-   >,
+  >,
   "mutationKey" | "mutationFn"
 >;
 

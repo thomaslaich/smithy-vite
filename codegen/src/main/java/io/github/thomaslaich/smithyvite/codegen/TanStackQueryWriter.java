@@ -242,7 +242,7 @@ final class TanStackQueryWriter {
             Error,
             $input:L,
             TOnMutateResult
-           >,
+          >,
           "mutationKey" | "mutationFn"
         >;
 

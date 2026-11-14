@@ -190,7 +190,7 @@ export type CreateItemMutationOptions<TOnMutateResult = unknown> = Omit<
     Error,
     CreateItemCommandInput,
     TOnMutateResult
-   >,
+  >,
   "mutationKey" | "mutationFn"
 >;
 
@@ -220,7 +220,7 @@ export type DeleteItemMutationOptions<TOnMutateResult = unknown> = Omit<
     Error,
     DeleteItemCommandInput,
     TOnMutateResult
-   >,
+  >,
   "mutationKey" | "mutationFn"
 >;
 
