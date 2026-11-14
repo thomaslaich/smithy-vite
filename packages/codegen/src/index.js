@@ -58,7 +58,46 @@ async function resolveBundledSmithyCli() {
   }
 }
 
+const tanstackFrameworks = ["react", "preact", "solid", "vue", "angular"];
+
+// Checks everything that can be checked without touching the toolchain or the
+// file system, so configuration mistakes fail fast with a precise message.
+function validateOptions(options) {
+  const mode = options.mode ?? "client";
+  if (!Array.isArray(options.sources)) {
+    throw new Error(
+      "`sources` must be an array of model paths. Use an empty array when every model comes from `maven.dependencies`.",
+    );
+  }
+  if (typeof options.output !== "string" || options.output === "") {
+    throw new Error("`output` must be the directory to generate into.");
+  }
+  if (mode !== "client" && mode !== "server" && mode !== "types") {
+    throw new Error(`Unsupported TypeScript codegen mode: ${mode}`);
+  }
+  if (mode === "types" && !options.closure) {
+    throw new Error("TypeScript types mode requires a shape closure.");
+  }
+  if (mode !== "types" && !options.service) {
+    throw new Error(`TypeScript ${mode} mode requires a service.`);
+  }
+  if (mode !== "client" && options.tanstackQuery) {
+    throw new Error(
+      "TanStack Query adapters can only be generated in client mode.",
+    );
+  }
+  const framework = options.tanstackQuery?.framework;
+  if (framework !== undefined && !tanstackFrameworks.includes(framework)) {
+    throw new Error(`Unsupported TanStack Query framework: ${framework}`);
+  }
+  const toolchainMode = options.toolchain?.mode ?? "bundled";
+  if (toolchainMode !== "bundled" && toolchainMode !== "external") {
+    throw new Error(`Unsupported Smithy Vite toolchain mode: ${toolchainMode}`);
+  }
+}
+
 export async function generate(options) {
+  validateOptions(options);
   const root = resolve(options.root ?? process.cwd());
   const output = resolve(root, options.output);
   const work = resolve(root, ".smithy-vite");
@@ -94,7 +133,7 @@ export async function generate(options) {
       ...modelRepositories,
     ];
     dependencies = [...defaultCodegenDependencies(mode), ...modelDependencies];
-  } else if (toolchainMode === "external") {
+  } else {
     if (
       !Array.isArray(toolchain.maven?.repositories) ||
       toolchain.maven.repositories.length === 0
@@ -112,39 +151,10 @@ export async function generate(options) {
       ...(toolchain.maven?.dependencies ?? defaultCodegenDependencies(mode)),
       ...modelDependencies,
     ];
-  } else {
-    throw new Error(`Unsupported Smithy Vite toolchain mode: ${toolchainMode}`);
   }
   const tanstackFramework = options.tanstackQuery
     ? (options.tanstackQuery.framework ?? "react")
     : undefined;
-
-  if (mode !== "client" && mode !== "server" && mode !== "types") {
-    throw new Error(`Unsupported TypeScript codegen mode: ${mode}`);
-  }
-
-  if (mode === "types" && !options.closure) {
-    throw new Error("TypeScript types mode requires a shape closure.");
-  }
-
-  if (mode !== "types" && !options.service) {
-    throw new Error(`TypeScript ${mode} mode requires a service.`);
-  }
-
-  if (mode !== "client" && options.tanstackQuery) {
-    throw new Error(
-      "TanStack Query adapters can only be generated in client mode.",
-    );
-  }
-
-  if (
-    tanstackFramework !== undefined &&
-    !["react", "preact", "solid", "vue", "angular"].includes(tanstackFramework)
-  ) {
-    throw new Error(
-      `Unsupported TanStack Query framework: ${tanstackFramework}`,
-    );
-  }
 
   const config = {
     version: "1.0",

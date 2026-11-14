@@ -130,6 +130,25 @@ try {
     }),
     /Unsupported TanStack Query framework: svelte/,
   );
+  for (const [invalidOptions, message] of [
+    [{ sources: undefined }, /`sources` must be an array/],
+    [{ output: undefined }, /`output` must be the directory/],
+    [
+      { toolchain: { mode: "remote" } },
+      /Unsupported Smithy Vite toolchain mode/,
+    ],
+  ]) {
+    await assert.rejects(
+      generate({
+        root: bundledRoot,
+        sources: ["model"],
+        service: "example.weather#Weather",
+        output: "generated",
+        ...invalidOptions,
+      }),
+      message,
+    );
+  }
 
   const tanstackRoot = join(temporaryRoot, "tanstack");
   await cp(modelSource, join(tanstackRoot, "model"), { recursive: true });
