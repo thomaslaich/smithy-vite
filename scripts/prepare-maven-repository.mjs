@@ -106,6 +106,8 @@ async function runBuild({ repositories, cache, output, configName }) {
     );
     console.log("DEBUG", JSON.stringify({ cache, smithyCommand, configPath }), debug.stdout, debug.stderr);
     console.log("DEBUG ls temp", await readdir(temporaryRoot));
+    console.log("DEBUG ls output", await readdir(output));
+    console.log("DEBUG classpath", await readFile(join(output, "classpath.json"), "utf8").catch((e) => String(e)));
   } catch (error) {
     const details = [error.stdout, error.stderr].filter(Boolean).join("\n");
     throw new Error(
