@@ -95,7 +95,10 @@ async function runBuild({ repositories, cache, output, configName }) {
         output,
       ],
       {
-        cwd: repositoryRoot,
+        // Smithy's Maven resolver drops the drive letter from SMITHY_MAVEN_CACHE
+        // on Windows and resolves it against the working directory's drive, so
+        // run from the temporary root to keep both on the same drive.
+        cwd: temporaryRoot,
         env: {
           ...process.env,
           SMITHY_MAVEN_CACHE: cache,

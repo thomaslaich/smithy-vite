@@ -1,5 +1,10 @@
-import { sep, resolve } from "node:path";
+import { resolve } from "node:path";
 import { generate } from "@smithy-vite/codegen";
+import { normalizePath } from "vite";
+
+// Vite reports module ids and watcher paths with forward slashes on every
+// platform, so compare against normalized paths rather than native ones.
+const resolvePath = (...segments) => normalizePath(resolve(...segments));
 
 export function smithyVite(options) {
   if (options.mode && options.mode !== "client") {
@@ -7,7 +12,7 @@ export function smithyVite(options) {
   }
 
   let root = process.cwd();
-  let generatedSource = resolve(root, options.output, "src");
+  let generatedSource = resolvePath(root, options.output, "src");
   let running = Promise.resolve();
 
   const regenerate = () => {
@@ -28,14 +33,14 @@ export function smithyVite(options) {
     enforce: "pre",
     configResolved(config) {
       root = config.root;
-      generatedSource = resolve(root, options.output, "src");
+      generatedSource = resolvePath(root, options.output, "src");
     },
     resolveId(source, importer) {
       if (
         source === "./runtimeConfig" &&
-        importer?.startsWith(generatedSource)
+        importer?.startsWith(`${generatedSource}/`)
       ) {
-        return resolve(generatedSource, "runtimeConfig.browser.ts");
+        return `${generatedSource}/runtimeConfig.browser.ts`;
       }
     },
     async buildStart() {
@@ -43,14 +48,15 @@ export function smithyVite(options) {
     },
     configureServer(server) {
       const sourceRoots = options.sources.map((source) =>
-        resolve(root, source),
+        resolvePath(root, source),
       );
       server.watcher.add(sourceRoots);
-      server.watcher.on("all", async (_event, path) => {
+      server.watcher.on("all", async (_event, changedPath) => {
+        const path = normalizePath(changedPath);
         if (!path.endsWith(".smithy") && !path.endsWith(".json")) return;
         if (
           !sourceRoots.some(
-            (source) => path === source || path.startsWith(`${source}${sep}`),
+            (source) => path === source || path.startsWith(`${source}/`),
           )
         )
           return;
