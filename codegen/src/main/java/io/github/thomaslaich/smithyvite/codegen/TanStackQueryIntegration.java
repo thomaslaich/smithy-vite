@@ -2,6 +2,7 @@ package io.github.thomaslaich.smithyvite.codegen;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
@@ -17,17 +18,21 @@ import software.amazon.smithy.typescript.codegen.integration.TypeScriptIntegrati
  */
 public final class TanStackQueryIntegration implements TypeScriptIntegration {
 
-  private static final String FRAMEWORK_VARIABLE = "SMITHY_VITE_TANSTACK_FRAMEWORK";
-
-  private static String configuredFramework() {
-    return System.getenv().getOrDefault(FRAMEWORK_VARIABLE, "none");
+  /**
+   * The framework selected by {@code "tanstackQuery": {"framework": "..."}} in the plugin's
+   * settings in smithy-build.json, if any.
+   */
+  private static Optional<String> configuredFramework(TypeScriptSettings settings) {
+    return Optional.ofNullable(settings.getPluginSettings())
+        .flatMap(plugin -> plugin.getObjectMember("tanstackQuery"))
+        .map(tanstackQuery -> tanstackQuery.expectStringMember("framework").getValue());
   }
 
   @Override
   public boolean matchesSettings(TypeScriptSettings settings) {
     return settings.generateClient()
         && settings.getOptionalService().isPresent()
-        && !configuredFramework().equals("none");
+        && configuredFramework(settings).isPresent();
   }
 
   @Override
@@ -43,7 +48,7 @@ public final class TanStackQueryIntegration implements TypeScriptIntegration {
 
     TanStackQueryWriter adapter =
         new TanStackQueryWriter(
-            FrameworkAdapter.forName(configuredFramework()),
+            FrameworkAdapter.forName(configuredFramework(context.settings()).orElseThrow()),
             service,
             context.symbolProvider(),
             operations.stream()

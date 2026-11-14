@@ -116,6 +116,35 @@ try {
   await assert.rejects(
     access(join(bundledRoot, "generated/src/tanstack-query.ts")),
   );
+  assert.equal(
+    bundledConfig.plugins["typescript-codegen"].tanstackQuery,
+    undefined,
+  );
+  await assert.rejects(
+    generate({
+      root: bundledRoot,
+      sources: ["model"],
+      service: "example.weather#Weather",
+      output: "generated",
+      tanstackQuery: { framework: "svelte" },
+    }),
+    /Unsupported TanStack Query framework: svelte/,
+  );
+
+  const tanstackRoot = join(temporaryRoot, "tanstack");
+  await cp(modelSource, join(tanstackRoot, "model"), { recursive: true });
+  await generate({
+    root: tanstackRoot,
+    sources: ["model"],
+    service: "example.weather#Weather",
+    output: "generated",
+    tanstackQuery: {},
+  });
+  const tanstackConfig = await readGeneratedConfig(tanstackRoot);
+  assert.deepEqual(tanstackConfig.plugins["typescript-codegen"].tanstackQuery, {
+    framework: "react",
+  });
+  await access(join(tanstackRoot, "generated/src/tanstack-query.ts"));
 
   const contractRepositoryPath = join(temporaryRoot, "contract-repository");
   await publishContractFixture(contractRepositoryPath);
