@@ -18,6 +18,31 @@ for (const framework of ["react", "preact", "solid", "vue", "angular"]) {
     const address = server.httpServer?.address();
     assert(address && typeof address !== "string");
 
+    const generatedSource = resolve(
+      server.config.root,
+      "src/generated/weather/src",
+    );
+    const importer = resolve(generatedSource, "WeatherClient.ts");
+    const clientRuntime =
+      await server.environments.client.pluginContainer.resolveId(
+        "./runtimeConfig",
+        importer,
+      );
+    const ssrRuntime = await server.environments.ssr.pluginContainer.resolveId(
+      "./runtimeConfig",
+      importer,
+    );
+    assert.equal(
+      clientRuntime?.id,
+      resolve(generatedSource, "runtimeConfig.browser.ts"),
+      "the browser bundle must use the browser runtime config",
+    );
+    assert.equal(
+      ssrRuntime?.id,
+      resolve(generatedSource, "runtimeConfig.ts"),
+      "server-side rendering must keep the Node runtime config",
+    );
+
     const generated = await server.ssrLoadModule(
       "/src/generated/weather/src/index.ts",
     );
