@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import { createServer } from "vite";
+import { createServer, normalizePath } from "vite";
 
 for (const framework of ["react", "preact", "solid", "vue", "angular"]) {
   const server = await createServer({
@@ -16,6 +16,19 @@ for (const framework of ["react", "preact", "solid", "vue", "angular"]) {
     await server.listen();
     const address = server.httpServer?.address();
     assert(address && typeof address !== "string");
+
+    const generatedSource = normalizePath(
+      resolve(server.config.root, "src/generated/weather/src"),
+    );
+    const runtimeConfig = await server.pluginContainer.resolveId(
+      "./runtimeConfig",
+      `${generatedSource}/WeatherClient.ts`,
+    );
+    assert.equal(
+      runtimeConfig?.id,
+      `${generatedSource}/runtimeConfig.browser.ts`,
+      "the generated client must resolve the browser runtime config",
+    );
 
     const generated = await server.ssrLoadModule(
       "/src/generated/weather/src/index.ts",
