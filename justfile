@@ -20,6 +20,7 @@ validate:
     npm run check:toolchains
     npm run check:snapshots
     npm run generate
+    npm run check:dependency-ranges
     npm run typecheck
     npm run build
     npm run smoke
@@ -40,6 +41,7 @@ release-ci VERSION:
     npm run check:toolchains
     npm run check:snapshots
     npm run generate
+    npm run check:dependency-ranges
     npm run typecheck
     npm run build
     npm run smoke
