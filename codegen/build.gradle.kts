@@ -8,17 +8,27 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.30.0"
 }
 
+// The npm codegen package pins the versions this integration is built and
+// shipped with, so read them from there instead of repeating them here.
+@Suppress("UNCHECKED_CAST")
+val pinnedVersions = groovy.json.JsonSlurper()
+    .parse(layout.projectDirectory.file("../packages/codegen/src/versions.json").asFile)
+    as Map<String, String>
+
 group = "io.github.thomaslaich.smithyvite"
 version = (findProperty("version") as String?).takeUnless {
     it.isNullOrBlank() || it == "unspecified"
-} ?: "0.0.1-spike"
+} ?: pinnedVersions.getValue("integration")
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compileOnly("software.amazon.smithy.typescript:smithy-typescript-codegen:0.52.0")
+    compileOnly(
+        "software.amazon.smithy.typescript:smithy-typescript-codegen:" +
+            pinnedVersions.getValue("smithyTypescript"),
+    )
 }
 
 java {

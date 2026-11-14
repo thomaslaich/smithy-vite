@@ -47,17 +47,10 @@ for (const { packagePath, value } of packages.values()) {
   await writeFile(packagePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-const versionsPath = resolve(releaseRoot, "packages/codegen/src/versions.js");
-const versionsSource = await readFile(versionsPath, "utf8");
-const integrationVersionPattern = /export const integrationVersion = "[^"]+";/;
-if (!integrationVersionPattern.test(versionsSource)) {
-  throw new Error("Unable to find the Smithy Vite Maven integration version.");
-}
-const updatedVersions = versionsSource.replace(
-  integrationVersionPattern,
-  `export const integrationVersion = "${version}";`,
-);
-await writeFile(versionsPath, updatedVersions);
+const versionsPath = resolve(releaseRoot, "packages/codegen/src/versions.json");
+const versions = JSON.parse(await readFile(versionsPath, "utf8"));
+versions.integration = version;
+await writeFile(versionsPath, `${JSON.stringify(versions, null, 2)}\n`);
 
 console.log(
   `Staged ${publishablePackageRoots.length} npm packages and the Maven integration at ${version}`,
