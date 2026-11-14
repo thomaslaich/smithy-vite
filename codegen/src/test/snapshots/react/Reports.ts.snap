@@ -1,0 +1,79 @@
+// smithy-typescript generated code
+import { type UseQueryOptions, type UseQueryResult, queryOptions, useQuery } from "@tanstack/react-query";
+import { type ReactNode, createContext, createElement, useContext, useMemo } from "react";
+
+import { type GetReportCommandInput, type GetReportCommandOutput, GetReportCommand } from "./commands/GetReportCommand";
+import type { ReportsClient } from "./ReportsClient";
+
+
+export const getReportQueryKey = (input: GetReportCommandInput) =>
+  ["example.fixtures#Reports", "example.fixtures#GetReport", input] as const;
+
+export const getReportQueryOptions = (
+  client: ReportsClient,
+  input: GetReportCommandInput,
+) =>
+  queryOptions({
+    queryKey: getReportQueryKey(input),
+    queryFn: ({ signal }) => client.send(new GetReportCommand(input), { abortSignal: signal }),
+  });
+
+const ReportsClientContext = createContext<ReportsClient | undefined>(undefined);
+
+export interface ReportsClientProviderProps {
+  client: ReportsClient;
+  children?: ReactNode;
+}
+
+export const ReportsClientProvider = ({
+  client,
+  children,
+}: ReportsClientProviderProps) =>
+  createElement(ReportsClientContext.Provider, { value: client }, children);
+
+export const useReportsClient = () => {
+  const client = useContext(ReportsClientContext);
+  if (!client) {
+    throw new Error("useReportsClient must be used within a ReportsClientProvider");
+  }
+  return client;
+};
+
+export const createReportsApi = (client: ReportsClient) => ({
+  getReport: {
+    queryKey: getReportQueryKey,
+    queryOptions: (input: GetReportCommandInput) =>
+      getReportQueryOptions(client, input),
+  },
+});
+
+export type ReportsApi = ReturnType<typeof createReportsApi>;
+
+export const useReportsApi = () => {
+  const client = useReportsClient();
+  return useMemo(() => createReportsApi(client), [client]);
+};
+
+export type GetReportQueryOptions<TData = GetReportCommandOutput> = Omit<
+  UseQueryOptions<
+    GetReportCommandOutput,
+    Error,
+    TData,
+    ReturnType<typeof getReportQueryKey>
+  >,
+  "queryKey" | "queryFn"
+>;
+
+export const useGetReportQuery = <TData = GetReportCommandOutput>(
+  input: GetReportCommandInput,
+  options?: GetReportQueryOptions<TData>,
+): UseQueryResult<TData, Error> => {
+  const client = useReportsClient();
+  const { queryKey, queryFn } = getReportQueryOptions(client, input);
+  return useQuery<
+    GetReportCommandOutput,
+    Error,
+    TData,
+    ReturnType<typeof getReportQueryKey>
+  >({ ...options, queryKey, queryFn });
+};

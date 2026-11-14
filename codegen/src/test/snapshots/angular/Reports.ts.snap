@@ -1,0 +1,81 @@
+// smithy-typescript generated code
+import { type Provider, inject, InjectionToken } from "@angular/core";
+import {
+  type CreateQueryOptions,
+  type CreateQueryResult,
+  injectQuery,
+  queryOptions,
+} from "@tanstack/angular-query-experimental";
+
+import { type GetReportCommandInput, type GetReportCommandOutput, GetReportCommand } from "./commands/GetReportCommand";
+import type { ReportsClient } from "./ReportsClient";
+
+
+type MaybeAccessor<T> = T | (() => T);
+
+const resolveMaybeAccessor = <T>(value: MaybeAccessor<T>): T =>
+  typeof value === "function" ? (value as () => T)() : value;
+
+export const getReportQueryKey = (input: GetReportCommandInput) =>
+  ["example.fixtures#Reports", "example.fixtures#GetReport", input] as const;
+
+export const getReportQueryOptions = (
+  client: ReportsClient,
+  input: GetReportCommandInput,
+) =>
+  queryOptions({
+    queryKey: getReportQueryKey(input),
+    queryFn: ({ signal }) => client.send(new GetReportCommand(input), { abortSignal: signal }),
+  });
+
+const ReportsClientToken = new InjectionToken<ReportsClient>("ReportsClient");
+
+export const provideReportsClient = (client: ReportsClient): Provider => ({
+  provide: ReportsClientToken,
+  useValue: client,
+});
+
+export const injectReportsClient = () => inject(ReportsClientToken);
+
+export const createReportsApi = (client: ReportsClient) => ({
+  getReport: {
+    queryKey: getReportQueryKey,
+    queryOptions: (input: GetReportCommandInput) =>
+      getReportQueryOptions(client, input),
+  },
+});
+
+export type ReportsApi = ReturnType<typeof createReportsApi>;
+
+export const injectReportsApi = () =>
+  createReportsApi(injectReportsClient());
+
+export type GetReportQueryOptions<TData = GetReportCommandOutput> = Omit<
+  CreateQueryOptions<
+    GetReportCommandOutput,
+    Error,
+    TData,
+    ReturnType<typeof getReportQueryKey>
+  >,
+  "queryKey" | "queryFn" | "initialData"
+> & { initialData?: undefined };
+
+export const injectGetReportQuery = <TData = GetReportCommandOutput>(
+  input: MaybeAccessor<GetReportCommandInput>,
+  options?: GetReportQueryOptions<TData>,
+): CreateQueryResult<TData, Error> => {
+  const client = injectReportsClient();
+  return injectQuery<
+    GetReportCommandOutput,
+    Error,
+    TData,
+    ReturnType<typeof getReportQueryKey>
+  >(() => {
+    const resolvedInput = resolveMaybeAccessor(input);
+    return {
+      ...options,
+      queryKey: getReportQueryKey(resolvedInput),
+      queryFn: ({ signal }) => client.send(new GetReportCommand(resolvedInput), { abortSignal: signal }),
+    };
+  });
+};
