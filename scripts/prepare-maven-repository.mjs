@@ -202,15 +202,15 @@ try {
     configName: "offline-smithy-build.json",
   });
 
-  // Workspace projects cache resolved artifacts per version, and a source
-  // checkout rebuilds the integration without changing its version, so drop
-  // those caches to make the next generation pick up the new jars.
+  // Workspace projects cache resolved artifacts and classpaths per version, and
+  // a source checkout rebuilds the integration without changing its version,
+  // so drop those caches to make the next generation pick up the new jars.
   const exampleRoots = await readdir(join(repositoryRoot, "examples"));
   for (const project of [
     repositoryRoot,
     ...exampleRoots.map((name) => join(repositoryRoot, "examples", name)),
   ]) {
-    await rm(join(project, ".smithy-vite", "maven-cache"), {
+    await rm(join(project, ".smithy-vite"), {
       recursive: true,
       force: true,
     });

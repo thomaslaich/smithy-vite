@@ -17,6 +17,7 @@ prepare:
 
 validate:
     gradle -p codegen check
+    npm run test:unit
     npm run check:toolchains
     npm run check:snapshots
     npm run generate
@@ -38,6 +39,7 @@ release-ci VERSION:
     npm run prepare:maven
     treefmt --ci
     gradle -p codegen check
+    npm run test:unit
     npm run check:toolchains
     npm run check:snapshots
     npm run generate
