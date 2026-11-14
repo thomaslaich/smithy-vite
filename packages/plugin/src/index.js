@@ -56,13 +56,19 @@ export function smithyVite(options) {
       ownDirectories(root);
       generatedSource = resolve(root, options.output, "src");
     },
-    resolveId(source, importer) {
+    resolveId(source, importer, resolveOptions) {
       if (
-        source === "./runtimeConfig" &&
-        importer?.startsWith(generatedSource)
+        source !== "./runtimeConfig" ||
+        !importer?.startsWith(generatedSource)
       ) {
-        return resolve(generatedSource, "runtimeConfig.browser.ts");
+        return;
       }
+      // Server-side rendering keeps the Node runtime config, which uses the
+      // Node HTTP handler; only the browser bundle swaps in the fetch one.
+      const ssr = this.environment
+        ? this.environment.config.consumer === "server"
+        : resolveOptions?.ssr;
+      if (!ssr) return resolve(generatedSource, "runtimeConfig.browser.ts");
     },
     async buildStart() {
       await regenerate();
