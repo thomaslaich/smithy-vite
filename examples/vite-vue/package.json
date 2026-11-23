@@ -11,10 +11,10 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/core": "^3.977.6",
+    "@aws-sdk/core": "^3.981.0",
     "@smithy/core": "^3.31.1",
-    "@smithy/fetch-http-handler": "^5.6.13",
-    "@smithy/node-http-handler": "^4.9.13",
+    "@smithy/fetch-http-handler": "^5.8.1",
+    "@smithy/node-http-handler": "^4.14.2",
     "@smithy/types": "^4.16.1",
     "@tanstack/vue-query": "^5.102.1",
     "tslib": "^2.6.2",
