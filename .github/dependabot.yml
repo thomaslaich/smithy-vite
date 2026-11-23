@@ -1,0 +1,58 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    ignore:
+      # Workspace packages and local platform packages are versioned by the
+      # release workflow, not by Dependabot.
+      - dependency-name: "@smithy-vite/*"
+    groups:
+      smithy-runtime:
+        patterns:
+          - "@smithy/*"
+          - "@aws-sdk/*"
+      tanstack:
+        patterns:
+          - "@tanstack/*"
+      frameworks:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+          - "preact"
+          - "solid-js"
+          - "vue"
+          - "@angular/*"
+      build-tooling:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "@preact/*"
+          - "vite-plugin-*"
+          - "@analogjs/*"
+          - "typescript"
+          - "@types/node"
+          - "@tsconfig/*"
+          - "vue-tsc"
+
+  - package-ecosystem: gradle
+    directory: /codegen
+    schedule:
+      interval: weekly
+    ignore:
+      # Must stay in lockstep with smithyTypescriptVersion in
+      # packages/codegen/src/versions.js, so it is bumped by hand.
+      - dependency-name: "software.amazon.smithy.typescript:*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
