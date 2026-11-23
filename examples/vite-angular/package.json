@@ -11,10 +11,10 @@
     "typecheck": "ngc -p tsconfig.app.json --noEmit"
   },
   "dependencies": {
-    "@angular/common": "^22.1.3",
+    "@angular/common": "^22.3.0",
     "@angular/compiler": "^22.1.3",
     "@angular/core": "^22.1.3",
-    "@angular/platform-browser": "^22.1.3",
+    "@angular/platform-browser": "^22.3.0",
     "@aws-sdk/core": "^3.977.6",
     "@smithy/core": "^3.31.1",
     "@smithy/fetch-http-handler": "^5.6.13",
@@ -26,8 +26,8 @@
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^2.7.0",
-    "@angular/build": "^22.1.3",
-    "@angular/compiler-cli": "^22.1.3",
+    "@angular/build": "^22.3.0",
+    "@angular/compiler-cli": "^22.3.0",
     "@smithy-vite/codegen": "0.0.1-spike",
     "@smithy-vite/plugin": "0.0.1-spike",
     "typescript": "^6.0.3",
