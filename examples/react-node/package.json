@@ -26,7 +26,7 @@
     "@tanstack/react-query": "^5.101.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tslib": "^2.6.2"
+    "tslib": "^2.9.1"
   },
   "devDependencies": {
     "@smithy-vite/codegen": "0.0.1-spike",
