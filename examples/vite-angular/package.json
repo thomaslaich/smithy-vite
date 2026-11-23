@@ -22,7 +22,7 @@
     "@smithy/types": "^4.16.1",
     "@tanstack/angular-query-experimental": "5.102.1",
     "rxjs": "^7.8.2",
-    "tslib": "^2.6.2"
+    "tslib": "^2.9.1"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^2.7.0",
