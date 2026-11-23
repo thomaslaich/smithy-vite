@@ -17,7 +17,7 @@
     "@smithy/node-http-handler": "^4.9.13",
     "@smithy/types": "^4.16.1",
     "@tanstack/preact-query": "^5.102.1",
-    "preact": "^10.29.8",
+    "preact": "^11.2.0",
     "tslib": "^2.6.2"
   },
   "devDependencies": {
