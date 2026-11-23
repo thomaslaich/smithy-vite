@@ -180,6 +180,10 @@ Run `vite` as usual. The client is generated before the development server or
 production build starts, and changes to the model trigger regeneration and a
 full reload.
 
+The `output` directory is owned by `smithy-vite` and replaced on every run. It
+must be a dedicated directory: generation refuses to replace the project root,
+a model source, or a non-empty directory it did not generate.
+
 ## Framework adapters
 
 React is the default adapter and emits imports from `react` and
