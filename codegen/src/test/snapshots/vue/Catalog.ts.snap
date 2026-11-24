@@ -1,0 +1,241 @@
+// smithy-typescript generated code
+import {
+  type MutationOptions,
+  type QueryOptions,
+  type UseMutationReturnType,
+  type UseQueryReturnType,
+  mutationOptions,
+  queryOptions,
+  useMutation,
+  useQuery,
+} from "@tanstack/vue-query";
+import { type App, type InjectionKey, type MaybeRefOrGetter, type Plugin, inject, toValue } from "vue";
+
+import type { CatalogClient } from "./CatalogClient";
+import {
+  type CreateItemCommandInput,
+  type CreateItemCommandOutput,
+  CreateItemCommand,
+} from "./commands/CreateItemCommand";
+import {
+  type DeleteItemCommandInput,
+  type DeleteItemCommandOutput,
+  DeleteItemCommand,
+} from "./commands/DeleteItemCommand";
+import { type GetItemCommandInput, type GetItemCommandOutput, GetItemCommand } from "./commands/GetItemCommand";
+import { type ListItemsCommandInput, type ListItemsCommandOutput, ListItemsCommand } from "./commands/ListItemsCommand";
+
+
+export const getItemQueryKey = (input: GetItemCommandInput) =>
+  ["example.fixtures#Catalog", "example.fixtures#GetItem", input] as const;
+
+export const getItemQueryOptions = (
+  client: CatalogClient,
+  input: GetItemCommandInput,
+) =>
+  queryOptions({
+    queryKey: getItemQueryKey(input),
+    queryFn: ({ signal }) => client.send(new GetItemCommand(input), { abortSignal: signal }),
+  });
+
+export const listItemsQueryKey = (input: ListItemsCommandInput) =>
+  ["example.fixtures#Catalog", "example.fixtures#ListItems", input] as const;
+
+export const listItemsQueryOptions = (
+  client: CatalogClient,
+  input: ListItemsCommandInput,
+) =>
+  queryOptions({
+    queryKey: listItemsQueryKey(input),
+    queryFn: ({ signal }) => client.send(new ListItemsCommand(input), { abortSignal: signal }),
+  });
+
+export const createItemMutationKey = () =>
+  ["example.fixtures#Catalog", "example.fixtures#CreateItem"] as const;
+
+export const createItemMutationOptions = (
+  client: CatalogClient,
+) =>
+  mutationOptions({
+    mutationKey: createItemMutationKey(),
+    mutationFn: (input: CreateItemCommandInput) =>
+      client.send(new CreateItemCommand(input)),
+  });
+
+export const deleteItemMutationKey = () =>
+  ["example.fixtures#Catalog", "example.fixtures#DeleteItem"] as const;
+
+export const deleteItemMutationOptions = (
+  client: CatalogClient,
+) =>
+  mutationOptions({
+    mutationKey: deleteItemMutationKey(),
+    mutationFn: (input: DeleteItemCommandInput) =>
+      client.send(new DeleteItemCommand(input)),
+  });
+
+const CatalogClientKey: InjectionKey<CatalogClient> = Symbol("CatalogClient");
+
+export const provideCatalogClient = (client: CatalogClient): Plugin => ({
+  install(app: App) {
+    app.provide(CatalogClientKey, client);
+  },
+});
+
+export const useCatalogClient = () => {
+  const client = inject(CatalogClientKey);
+  if (!client) {
+    throw new Error("useCatalogClient requires app.use(provideCatalogClient(client))");
+  }
+  return client;
+};
+
+export const createCatalogApi = (client: CatalogClient) => ({
+  getItem: {
+    queryKey: getItemQueryKey,
+    queryOptions: (input: GetItemCommandInput) =>
+      getItemQueryOptions(client, input),
+  },
+  listItems: {
+    queryKey: listItemsQueryKey,
+    queryOptions: (input: ListItemsCommandInput) =>
+      listItemsQueryOptions(client, input),
+  },
+  createItem: {
+    mutationKey: createItemMutationKey,
+    mutationOptions: () => createItemMutationOptions(client),
+  },
+  deleteItem: {
+    mutationKey: deleteItemMutationKey,
+    mutationOptions: () => deleteItemMutationOptions(client),
+  },
+});
+
+export type CatalogApi = ReturnType<typeof createCatalogApi>;
+
+export const useCatalogApi = () => {
+  const client = useCatalogClient();
+  return createCatalogApi(client);
+};
+
+export type GetItemQueryOptions<TData = GetItemCommandOutput> = Omit<
+  QueryOptions<
+    GetItemCommandOutput,
+    Error,
+    TData,
+    GetItemCommandOutput,
+    ReturnType<typeof getItemQueryKey>
+  >,
+  "queryKey" | "queryFn"
+>;
+
+export const useGetItemQuery = <TData = GetItemCommandOutput>(
+  input: MaybeRefOrGetter<GetItemCommandInput>,
+  options?: GetItemQueryOptions<TData>,
+): UseQueryReturnType<TData, Error> => {
+  const client = useCatalogClient();
+  return useQuery<
+    GetItemCommandOutput,
+    Error,
+    TData,
+    ReturnType<typeof getItemQueryKey>
+  >(() => {
+    const resolvedInput = toValue(input);
+    return {
+      ...options,
+      queryKey: getItemQueryKey(resolvedInput),
+      queryFn: ({ signal }) => client.send(new GetItemCommand(resolvedInput), { abortSignal: signal }),
+    };
+  });
+};
+
+export type ListItemsQueryOptions<TData = ListItemsCommandOutput> = Omit<
+  QueryOptions<
+    ListItemsCommandOutput,
+    Error,
+    TData,
+    ListItemsCommandOutput,
+    ReturnType<typeof listItemsQueryKey>
+  >,
+  "queryKey" | "queryFn"
+>;
+
+export const useListItemsQuery = <TData = ListItemsCommandOutput>(
+  input: MaybeRefOrGetter<ListItemsCommandInput>,
+  options?: ListItemsQueryOptions<TData>,
+): UseQueryReturnType<TData, Error> => {
+  const client = useCatalogClient();
+  return useQuery<
+    ListItemsCommandOutput,
+    Error,
+    TData,
+    ReturnType<typeof listItemsQueryKey>
+  >(() => {
+    const resolvedInput = toValue(input);
+    return {
+      ...options,
+      queryKey: listItemsQueryKey(resolvedInput),
+      queryFn: ({ signal }) => client.send(new ListItemsCommand(resolvedInput), { abortSignal: signal }),
+    };
+  });
+};
+
+export type CreateItemMutationOptions<TOnMutateResult = unknown> = Omit<
+  MutationOptions<
+    CreateItemCommandOutput,
+    Error,
+    CreateItemCommandInput,
+    TOnMutateResult
+   >,
+  "mutationKey" | "mutationFn"
+>;
+
+export const useCreateItemMutation = <TOnMutateResult = unknown>(
+  options?: CreateItemMutationOptions<TOnMutateResult>,
+): UseMutationReturnType<
+  CreateItemCommandOutput,
+  Error,
+  CreateItemCommandInput,
+  TOnMutateResult
+> => {
+  const client = useCatalogClient();
+  return useMutation<
+    CreateItemCommandOutput,
+    Error,
+    CreateItemCommandInput,
+    TOnMutateResult
+  >(() => {
+    const { mutationKey, mutationFn } = createItemMutationOptions(client);
+    return { ...options, mutationKey, mutationFn };
+  });
+};
+
+export type DeleteItemMutationOptions<TOnMutateResult = unknown> = Omit<
+  MutationOptions<
+    DeleteItemCommandOutput,
+    Error,
+    DeleteItemCommandInput,
+    TOnMutateResult
+   >,
+  "mutationKey" | "mutationFn"
+>;
+
+export const useDeleteItemMutation = <TOnMutateResult = unknown>(
+  options?: DeleteItemMutationOptions<TOnMutateResult>,
+): UseMutationReturnType<
+  DeleteItemCommandOutput,
+  Error,
+  DeleteItemCommandInput,
+  TOnMutateResult
+> => {
+  const client = useCatalogClient();
+  return useMutation<
+    DeleteItemCommandOutput,
+    Error,
+    DeleteItemCommandInput,
+    TOnMutateResult
+  >(() => {
+    const { mutationKey, mutationFn } = deleteItemMutationOptions(client);
+    return { ...options, mutationKey, mutationFn };
+  });
+};

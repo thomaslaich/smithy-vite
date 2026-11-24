@@ -14,6 +14,8 @@
     "prepare:maven": "node scripts/prepare-maven-repository.mjs",
     "check:toolchains": "node scripts/check-toolchain-modes.mjs",
     "check:packages": "node scripts/check-packages.mjs",
+    "check:snapshots": "node scripts/check-snapshots.mjs",
+    "update:snapshots": "node scripts/check-snapshots.mjs --update",
     "generate": "npm run generate:react && npm run generate:preact && npm run generate:solid && npm run generate:vue && npm run generate:angular && npm run generate:react-node",
     "generate:react": "npm run generate --workspace @smithy-vite/example-vite",
     "generate:preact": "npm run generate --workspace @smithy-vite/example-vite-preact",

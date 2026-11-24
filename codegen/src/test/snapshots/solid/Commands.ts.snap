@@ -1,0 +1,90 @@
+// smithy-typescript generated code
+import { type MutationOptions, type UseMutationResult, mutationOptions, useMutation } from "@tanstack/solid-query";
+import { type JSX, createComponent, createContext, useContext } from "solid-js";
+
+import {
+  type RunCommandCommandInput,
+  type RunCommandCommandOutput,
+  RunCommandCommand,
+} from "./commands/RunCommandCommand";
+import type { CommandsClient } from "./CommandsClient";
+
+
+export const runCommandMutationKey = () =>
+  ["example.fixtures#Commands", "example.fixtures#RunCommand"] as const;
+
+export const runCommandMutationOptions = (
+  client: CommandsClient,
+) =>
+  mutationOptions({
+    mutationKey: runCommandMutationKey(),
+    mutationFn: (input: RunCommandCommandInput) =>
+      client.send(new RunCommandCommand(input)),
+  });
+
+const CommandsClientContext = createContext<CommandsClient | undefined>(undefined);
+
+export interface CommandsClientProviderProps {
+  client: CommandsClient;
+  children?: JSX.Element;
+}
+
+export const CommandsClientProvider = (
+  props: CommandsClientProviderProps,
+) =>
+  createComponent(CommandsClientContext.Provider, {
+    get value() { return props.client; },
+    get children() { return props.children; },
+  });
+
+export const useCommandsClient = () => {
+  const client = useContext(CommandsClientContext);
+  if (!client) {
+    throw new Error("useCommandsClient must be used within a CommandsClientProvider");
+  }
+  return client;
+};
+
+export const createCommandsApi = (client: CommandsClient) => ({
+  runCommand: {
+    mutationKey: runCommandMutationKey,
+    mutationOptions: () => runCommandMutationOptions(client),
+  },
+});
+
+export type CommandsApi = ReturnType<typeof createCommandsApi>;
+
+export const useCommandsApi = () => {
+  const client = useCommandsClient();
+  return createCommandsApi(client);
+};
+
+export type RunCommandMutationOptions<TOnMutateResult = unknown> = Omit<
+  MutationOptions<
+    RunCommandCommandOutput,
+    Error,
+    RunCommandCommandInput,
+    TOnMutateResult
+   >,
+  "mutationKey" | "mutationFn"
+>;
+
+export const useRunCommandMutation = <TOnMutateResult = unknown>(
+  options?: RunCommandMutationOptions<TOnMutateResult>,
+): UseMutationResult<
+  RunCommandCommandOutput,
+  Error,
+  RunCommandCommandInput,
+  TOnMutateResult
+> => {
+  const client = useCommandsClient();
+  return useMutation<
+    RunCommandCommandOutput,
+    Error,
+    RunCommandCommandInput,
+    TOnMutateResult
+  >(() => {
+    const { mutationKey, mutationFn } = runCommandMutationOptions(client);
+    return { ...options, mutationKey, mutationFn };
+  });
+};
