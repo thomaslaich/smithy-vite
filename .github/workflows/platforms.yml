@@ -1,0 +1,72 @@
+name: Platforms
+
+# The Nix-based CI covers Linux x64. This workflow runs the same validation
+# natively on the other platforms smithy-vite ships a Smithy CLI package for.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platforms-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+          - ubuntu-24.04-arm
+    runs-on: ${{ matrix.os }}
+    # smithy-typescript 0.52.0 builds some relative imports with
+    # java.nio.file.Paths, so on Windows they are emitted without separators
+    # (for example "..modelsWeatherServiceException") and the generated client
+    # does not compile. Keep the job visible but non-blocking until that is
+    # fixed upstream.
+    continue-on-error: ${{ matrix.os == 'windows-latest' }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.14.4
+      - name: Prepare toolchain
+        run: |
+          npm ci
+          npm run prepare:cli
+          npm run build:integration
+          npm run prepare:maven
+      - name: Check toolchain modes
+        run: npm run check:toolchains
+      - name: Generate
+        run: npm run generate
+      - name: Type-check
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Smoke test
+        run: npm run smoke
+      - name: Check packages
+        run: npm run check:packages

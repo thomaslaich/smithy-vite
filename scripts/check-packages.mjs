@@ -15,6 +15,8 @@ const packageRoots = process.argv.includes("--all")
 for (const packageRoot of packageRoots) {
   await execFileAsync("npm", ["pack", "--dry-run", resolve(packageRoot)], {
     maxBuffer: 10 * 1024 * 1024,
+    // npm is a .cmd shim on Windows, which execFile can only start via a shell.
+    shell: process.platform === "win32",
   });
   console.log(`${packageRoot}: package contents validated`);
 }
